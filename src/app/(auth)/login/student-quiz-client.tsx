@@ -963,8 +963,8 @@ export function StudentQuizClient({ initialQuestions, initialVideos = [], return
 
       {/* FOOTER */}
       <footer className="mt-12 text-center text-xs text-muted-foreground font-normal px-4">
-        <p>© {new Date().getFullYear()} - Cổng thông tin học tập vui nhộn lớp {selectedGrade}.</p>
-        <p className="mt-1">Bài giảng tham khảo sách giáo khoa Kết nối tri thức với cuộc sống.</p>
+        <p>© 2026 – Hệ thống Quản lý lớp học.</p>
+        <p className="mt-1">Đồng hành cùng giáo viên trong quản lý và nâng cao chất lượng học tập.</p>
       </footer>
 
       {/* 3. ĐĂNG NHẬP GIÁO VIÊN DIALOG MODAL */}
