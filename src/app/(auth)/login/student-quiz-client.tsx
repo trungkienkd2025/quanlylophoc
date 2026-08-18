@@ -957,22 +957,6 @@ export function StudentQuizClient({ initialQuestions, initialVideos = [], return
           <div className="max-w-md mx-auto px-4 space-y-3">
             <h2 className="text-2xl font-extrabold text-sky-950">🎯 Sẵn sàng thử sức?</h2>
             <p className="text-sm text-sky-900 font-normal">Hãy làm bài tập trắc nghiệm và xem em đạt được bao nhiêu điểm nhé!</p>
-            <div className="pt-2 flex justify-center gap-2">
-              <Button
-                onClick={() => {
-                  const element = document.getElementById("student-info-section");
-                  if (element) element.scrollIntoView({ behavior: "smooth" });
-                }}
-                className="bg-orange-500 hover:bg-orange-600 text-white font-extrabold px-6 rounded-xl"
-              >
-                Làm bài ngay
-              </Button>
-              <a href="#video-lessons">
-                <Button variant="outline" className="border-sky-300 text-sky-700 bg-white hover:bg-sky-50 font-bold px-6 rounded-xl">
-                  Xem bài học
-                </Button>
-              </a>
-            </div>
           </div>
         </section>
       )}
