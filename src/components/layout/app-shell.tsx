@@ -147,8 +147,8 @@ export function AppShell({
           <div className="min-h-0 flex-1 space-y-1 overflow-y-auto pr-1">
             <Link
               className={cn(
-                "flex h-9 items-center gap-2.5 rounded-lg px-2.5 text-sm font-medium hover:bg-sky-50 hover:text-primary",
-                pathname === "/dashboard" && "bg-sky-50 text-primary",
+                "flex h-9 items-center gap-2.5 rounded-lg px-2.5 text-sm font-medium text-blue-900 hover:bg-sky-50 hover:text-blue-900",
+                pathname === "/dashboard" && "bg-sky-50 text-blue-900",
               )}
               href="/dashboard"
             >
@@ -160,8 +160,8 @@ export function AppShell({
               <button
                 aria-expanded={visibleYearsSectionOpen}
                 className={cn(
-                  "flex h-9 w-full items-center gap-2.5 rounded-lg px-2.5 text-sm font-medium hover:bg-sky-50 hover:text-primary",
-                  visibleYearsSectionOpen && "bg-sky-50/70 text-primary",
+                  "flex h-9 w-full items-center gap-2.5 rounded-lg px-2.5 text-sm font-medium text-blue-900 hover:bg-sky-50 hover:text-blue-900",
+                  visibleYearsSectionOpen && "bg-sky-50/70 text-blue-900",
                 )}
                 onClick={() => {
                   const next = !visibleYearsSectionOpen;
@@ -173,9 +173,9 @@ export function AppShell({
                 <BookOpen aria-hidden="true" className="size-4 shrink-0" />
                 <span className="flex-1 text-left">Năm học</span>
                 {visibleYearsSectionOpen ? (
-                  <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
+                  <ChevronDown className="size-4 shrink-0 text-blue-900" />
                 ) : (
-                  <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+                  <ChevronRight className="size-4 shrink-0 text-blue-900" />
                 )}
               </button>
 
@@ -286,8 +286,8 @@ export function AppShell({
 
             <Link
               className={cn(
-                "flex h-9 items-center gap-2.5 rounded-lg px-2.5 text-sm font-medium hover:bg-sky-50 hover:text-primary",
-                pathname.startsWith("/reports") && "bg-sky-50 text-primary",
+                "flex h-9 items-center gap-2.5 rounded-lg px-2.5 text-sm font-medium text-blue-900 hover:bg-sky-50 hover:text-blue-900",
+                pathname.startsWith("/reports") && "bg-sky-50 text-blue-900",
               )}
               href="/reports"
             >
@@ -338,7 +338,7 @@ export function AppShell({
                 key={label}
                 onClick={onClick}
                 type="button"
-                className="flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-lg py-1.5 text-[10px] font-medium text-primary cursor-pointer hover:bg-slate-50 transition-colors"
+                className="flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-lg py-1.5 text-[10px] font-medium text-blue-900 cursor-pointer hover:bg-slate-50 transition-colors"
               >
                 <Icon aria-hidden="true" className="size-4" />
                 <span className="truncate">{label}</span>
@@ -347,7 +347,7 @@ export function AppShell({
           }
           return (
             <Link
-              className="flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-lg py-1.5 text-[10px] font-medium text-primary hover:bg-slate-50 transition-colors"
+              className="flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-lg py-1.5 text-[10px] font-medium text-blue-900 hover:bg-slate-50 transition-colors"
               href={href}
               key={label}
             >
