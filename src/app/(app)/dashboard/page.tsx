@@ -81,7 +81,7 @@ export default async function DashboardPage() {
               </div>
               <div>
                 <h2 className="text-lg font-bold text-violet-950">
-                  Học liệu số (Video)
+                  Học liệu số
                 </h2>
                 <p className="text-xs text-muted-foreground font-normal text-slate-600">
                   Quản lý liên kết video bài giảng theo khối lớp 1–5
