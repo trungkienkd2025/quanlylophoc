@@ -5,6 +5,78 @@ import { DEFAULT_QUIZ_QUESTIONS, STATIC_VIDEOS } from "@/lib/student-quiz-data";
 import { QuizQuestion, QuizSubmission, LessonVideo } from "@/types/student-quiz";
 import { revalidatePath } from "next/cache";
 
+const ATTACHMENT_FILE_TYPES = new Set([
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-powerpoint",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "application/pdf",
+]);
+
+const THUMBNAIL_FILE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+
+const EMPTY_FILE_SIZE = 0;
+
+function sanitizeBlobPathPart(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9._-]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .toLowerCase() || "file";
+}
+
+async function uploadToVercelBlob(file: File, prefix: string, userId: string) {
+  const token = process.env.BLOB_READ_WRITE_TOKEN;
+  if (!token) {
+    throw new Error("Missing Vercel Blob token");
+  }
+
+  const pathname = [
+    "learning-materials",
+    userId,
+    prefix,
+    `${Date.now()}-${crypto.randomUUID()}-${sanitizeBlobPathPart(file.name)}`,
+  ].join("/");
+
+  const response = await fetch(`https://blob.vercel-storage.com/${pathname}`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": file.type || "application/octet-stream",
+      "x-vercel-blob-add-random-suffix": "0",
+      "x-vercel-blob-access": "public",
+    },
+    body: file,
+  });
+
+  if (!response.ok) {
+    throw new Error("Blob upload failed");
+  }
+
+  const data = await response.json() as { url?: string; downloadUrl?: string; pathname?: string };
+  if (!data.url) {
+    throw new Error("Blob upload response invalid");
+  }
+
+  return data.url;
+}
+
+async function deleteFromVercelBlob(urls: Array<string | null | undefined>) {
+  const token = process.env.BLOB_READ_WRITE_TOKEN;
+  const validUrls = urls.filter((url): url is string => Boolean(url));
+  if (!token || validUrls.length === 0) return;
+
+  await fetch("https://blob.vercel-storage.com", {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ urls: validUrls }),
+  }).catch(() => undefined);
+}
+
 // Tải danh sách câu hỏi trắc nghiệm (nếu lỗi hoặc bảng trống, trả về bộ 10 câu mặc định)
 export async function getQuizQuestions(grade?: number, includeInactive = false, teacherId?: string): Promise<QuizQuestion[]> {
   try {
@@ -276,20 +348,34 @@ export async function getLessonVideos(grade?: number, teacherId?: string): Promi
       id: string;
       title: string;
       description: string;
-      youtube_url: string;
+      youtube_url: string | null;
       grade: number;
       order_index: number;
       teacher_id?: string;
+      material_type?: "link" | "attachment";
+      file_url?: string | null;
+      original_file_name?: string | null;
+      file_mime_type?: string | null;
+      file_size_bytes?: number | null;
+      thumbnail_url?: string | null;
+      created_at?: string;
     }
 
     return (data as DbLessonVideo[]).map((v) => ({
       id: v.id,
       title: v.title,
       description: v.description,
-      youtubeUrl: v.youtube_url,
+      youtubeUrl: v.youtube_url || v.file_url || "",
       grade: v.grade,
       order_index: v.order_index,
       teacher_id: v.teacher_id,
+      materialType: v.material_type || "link",
+      fileUrl: v.file_url,
+      originalFileName: v.original_file_name,
+      fileMimeType: v.file_mime_type,
+      fileSizeBytes: v.file_size_bytes,
+      thumbnailUrl: v.thumbnail_url,
+      createdAt: v.created_at,
     }));
   } catch {
     return grade === undefined || grade === 4 ? STATIC_VIDEOS : [];
@@ -335,6 +421,7 @@ export async function updateLessonVideo(
     }
 
     revalidatePath("/quiz-management");
+    revalidatePath("/learning-materials");
     revalidatePath("/login");
     return { success: true };
   } catch (err) {
@@ -356,11 +443,131 @@ export async function deleteLessonVideo(videoId: string): Promise<{ success: boo
     }
 
     revalidatePath("/quiz-management");
+    revalidatePath("/learning-materials");
     revalidatePath("/login");
     return { success: true };
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : "Có lỗi xảy ra khi xoá video.";
     return { success: false, error: errMsg };
+  }
+}
+
+export async function upsertAttachmentMaterial(
+  materialId: string | null,
+  formData: FormData
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: "Đăng nhập đã hết hạn. Vui lòng đăng nhập lại." };
+
+    const title = String(formData.get("title") || "").trim();
+    const grade = Number(formData.get("grade"));
+    const fileValue = formData.get("file");
+    const thumbnailValue = formData.get("thumbnail");
+
+    if (!title) return { success: false, error: "Vui lòng nhập tên tài liệu." };
+    if (!Number.isInteger(grade) || grade < 1 || grade > 5) return { success: false, error: "Vui lòng chọn khối lớp." };
+
+    const current = materialId
+      ? await supabase
+          .from("lesson_videos")
+          .select("file_url, thumbnail_url, original_file_name, file_mime_type, file_size_bytes")
+          .eq("id", materialId)
+          .eq("teacher_id", user.id)
+          .single()
+      : null;
+
+    if (current?.error) return { success: false, error: "Không thể cập nhật file đính kèm." };
+
+    const hasNewFile = fileValue instanceof File && fileValue.size > EMPTY_FILE_SIZE;
+    if (!materialId && !hasNewFile) return { success: false, error: "Vui lòng chọn file đính kèm." };
+    if (hasNewFile && !ATTACHMENT_FILE_TYPES.has(fileValue.type)) {
+      return { success: false, error: "File đính kèm chỉ hỗ trợ Word, PowerPoint hoặc PDF." };
+    }
+
+    const hasNewThumbnail = thumbnailValue instanceof File && thumbnailValue.size > EMPTY_FILE_SIZE;
+    if (hasNewThumbnail && !THUMBNAIL_FILE_TYPES.has(thumbnailValue.type)) {
+      return { success: false, error: "Hình minh họa chỉ hỗ trợ JPG, PNG hoặc WEBP." };
+    }
+
+    let fileUrl = current?.data?.file_url as string | null | undefined;
+    let originalFileName = current?.data?.original_file_name as string | null | undefined;
+    let fileMimeType = current?.data?.file_mime_type as string | null | undefined;
+    let fileSizeBytes = current?.data?.file_size_bytes as number | null | undefined;
+    let thumbnailUrl = current?.data?.thumbnail_url as string | null | undefined;
+
+    if (hasNewFile) {
+      const previousFileUrl = fileUrl;
+      fileUrl = await uploadToVercelBlob(fileValue, "files", user.id);
+      originalFileName = fileValue.name;
+      fileMimeType = fileValue.type;
+      fileSizeBytes = fileValue.size;
+      await deleteFromVercelBlob([previousFileUrl]);
+    }
+
+    if (hasNewThumbnail) {
+      const previousThumbnailUrl = thumbnailUrl;
+      thumbnailUrl = await uploadToVercelBlob(thumbnailValue, "thumbnails", user.id);
+      await deleteFromVercelBlob([previousThumbnailUrl]);
+    } else if (formData.get("removeThumbnail") === "1") {
+      await deleteFromVercelBlob([thumbnailUrl]);
+      thumbnailUrl = null;
+    }
+
+    const payload = {
+      teacher_id: user.id,
+      title,
+      description: originalFileName || "File đính kèm",
+      youtube_url: fileUrl || "",
+      grade,
+      order_index: 0,
+      material_type: "attachment",
+      file_url: fileUrl,
+      original_file_name: originalFileName,
+      file_mime_type: fileMimeType,
+      file_size_bytes: fileSizeBytes,
+      thumbnail_url: thumbnailUrl,
+    };
+
+    const { error } = materialId
+      ? await supabase.from("lesson_videos").update(payload).eq("id", materialId).eq("teacher_id", user.id)
+      : await supabase.from("lesson_videos").insert(payload);
+
+    if (error) return { success: false, error: "Không thể đăng file đính kèm. Vui lòng thử lại." };
+
+    revalidatePath("/learning-materials");
+    revalidatePath("/login");
+    return { success: true };
+  } catch {
+    return { success: false, error: "Không thể đăng file đính kèm. Vui lòng thử lại." };
+  }
+}
+
+export async function deleteAttachmentMaterial(materialId: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: "Đăng nhập đã hết hạn." };
+
+    const current = await supabase
+      .from("lesson_videos")
+      .select("file_url, thumbnail_url")
+      .eq("id", materialId)
+      .eq("teacher_id", user.id)
+      .single();
+
+    if (current.error) return { success: false, error: "Không thể xoá file đính kèm." };
+
+    const { error } = await supabase.from("lesson_videos").delete().eq("id", materialId).eq("teacher_id", user.id);
+    if (error) return { success: false, error: "Không thể xoá file đính kèm." };
+
+    await deleteFromVercelBlob([current.data.file_url, current.data.thumbnail_url]);
+    revalidatePath("/learning-materials");
+    revalidatePath("/login");
+    return { success: true };
+  } catch {
+    return { success: false, error: "Không thể xoá file đính kèm." };
   }
 }
 

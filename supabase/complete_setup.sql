@@ -679,9 +679,16 @@ create table public.lesson_videos (
   teacher_id uuid references public.profiles(id) on delete cascade,
   title text not null check (char_length(btrim(title)) > 0),
   description text not null,
-  youtube_url text not null check (char_length(btrim(youtube_url)) > 0),
+  youtube_url text not null default '',
   grade integer not null check (grade between 1 and 5),
   order_index integer not null default 0,
+  material_type text not null default 'link' check (material_type in ('link', 'attachment')),
+  file_url text,
+  original_file_name text,
+  file_mime_type text,
+  file_size_bytes bigint check (file_size_bytes is null or file_size_bytes > 0),
+  thumbnail_url text,
+  constraint lesson_videos_youtube_url_check check (material_type = 'attachment' or char_length(btrim(youtube_url)) > 0),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
