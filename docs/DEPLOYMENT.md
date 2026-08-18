@@ -71,8 +71,9 @@ Trong **Settings** → **Environment Variables**, thêm cho **Production** (và 
 |------|--------|
 | `NEXT_PUBLIC_SUPABASE_URL` | URL từ Supabase |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | anon key từ Supabase |
+| `BLOB_READ_WRITE_TOKEN` | Token Vercel Blob, dùng trên server để upload file học liệu đính kèm |
 
-Không thêm `SUPABASE_SERVICE_ROLE_KEY` trừ khi có backend riêng (ứng dụng này không cần).
+Không thêm `SUPABASE_SERVICE_ROLE_KEY` trừ khi có backend riêng (ứng dụng này không cần). `BLOB_READ_WRITE_TOKEN` là biến server-only, không prefix `NEXT_PUBLIC_`.
 
 ### 3. Deploy
 
@@ -92,12 +93,23 @@ Sau khi có URL Vercel (`https://xxx.vercel.app`), quay lại Supabase → **URL
 
 ---
 
+## Vercel Blob cho file học liệu đính kèm
+
+Tính năng `/learning-materials` cho phép giáo viên đăng Word, PowerPoint, PDF và hình minh họa. Vì Vercel không lưu bền vững file ghi vào filesystem local, production cần Vercel Blob:
+
+1. Vercel Dashboard → project `quanlylophoc` → **Storage**.
+2. Chọn **Create Database** → **Blob** → đặt tên store.
+3. Kết nối Blob store với project và các environment cần dùng.
+4. Vercel tự tạo `BLOB_READ_WRITE_TOKEN`; nếu chưa có, tạo token trong Blob store và thêm vào **Settings → Environment Variables**.
+5. Redeploy project sau khi thêm biến môi trường.
+
 ## Biến môi trường local vs production
 
 | Biến | Local (`.env.local`) | Vercel |
 |------|----------------------|--------|
 | `NEXT_PUBLIC_SUPABASE_URL` | URL Supabase | Giống |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | anon key | Giống |
+| `BLOB_READ_WRITE_TOKEN` | Token Blob để test upload local | Token Blob production/preview |
 
 Có thể dùng cùng một Supabase project cho dev và production khi thử nghiệm, hoặc tách project riêng cho production.
 

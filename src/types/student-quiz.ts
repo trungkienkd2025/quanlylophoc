@@ -20,6 +20,8 @@ export interface QuizSubmission {
   teacher_id?: string;
 }
 
+export type LessonMaterialType = "link" | "attachment";
+
 export interface LessonVideo {
   id?: string;
   title: string;
@@ -28,4 +30,11 @@ export interface LessonVideo {
   grade?: number;
   order_index?: number;
   teacher_id?: string;
+  materialType?: LessonMaterialType;
+  fileUrl?: string | null;
+  originalFileName?: string | null;
+  fileMimeType?: string | null;
+  fileSizeBytes?: number | null;
+  thumbnailUrl?: string | null;
+  createdAt?: string;
 }
