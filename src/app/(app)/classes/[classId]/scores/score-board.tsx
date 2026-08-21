@@ -21,12 +21,25 @@ function fmt(value: number | null | undefined) {
   return value == null ? "" : String(value);
 }
 
-function total(theory: string | number, practice: string | number) {
-  const a = Number(theory);
-  const b = Number(practice);
-  return Number.isFinite(a) && Number.isFinite(b)
-    ? ((a + b) / 2).toFixed(2).replace(/\.00$/, "")
-    : "—";
+function clampScore(value: string | number) {
+  const score = Number(value);
+  if (!Number.isFinite(score)) return null;
+  return Math.min(10, Math.max(0, score));
+}
+
+export function calculateTotal(theory: string | number, practice: string | number) {
+  const theoryScore = clampScore(theory);
+  const practiceScore = clampScore(practice);
+  if (theoryScore == null || practiceScore == null) return 0;
+  const sum = theoryScore + practiceScore;
+  const rounded = Math.ceil(sum);
+  return Math.min(10, rounded);
+}
+
+function normalizeScoreInput(value: string) {
+  if (value === "") return value;
+  const score = clampScore(value);
+  return score == null ? value : String(score);
 }
 
 function compareStudents(a: Student, b: Student, mode: SortMode) {
@@ -87,8 +100,9 @@ export function ScoreBoard({
     field: "semesterTheory" | "semesterPractice" | "annualTheory" | "annualPractice",
     value: string,
   ) {
+    const normalizedValue = normalizeScoreInput(value);
     setEntries((current) =>
-      current.map((entry) => (entry.student_id === id ? { ...entry, [field]: value } : entry)),
+      current.map((entry) => (entry.student_id === id ? { ...entry, [field]: normalizedValue } : entry)),
     );
   }
 
@@ -103,6 +117,10 @@ export function ScoreBoard({
           student_id: entry.student_id,
           theory_score: type === "semester" ? entry.semesterTheory : entry.annualTheory,
           practice_score: type === "semester" ? entry.semesterPractice : entry.annualPractice,
+          total_score: calculateTotal(
+            type === "semester" ? entry.semesterTheory : entry.annualTheory,
+            type === "semester" ? entry.semesterPractice : entry.annualPractice,
+          ),
         })),
       );
       if (result.error) {
@@ -151,7 +169,7 @@ export function ScoreBoard({
       </div>
 
       <p className="mb-3 text-sm text-muted-foreground">
-        Tổng tự tính: (Lý thuyết + Thực hành) / 2. Sắp xếp chỉ đổi thứ tự hiển thị.
+        Tổng tự tính: Lý thuyết + Thực hành, tối đa 10. Sắp xếp chỉ đổi thứ tự hiển thị.
       </p>
       {message ? <p className="mb-2 text-sm text-emerald-600">{message}</p> : null}
       {error ? <p className="mb-2 text-sm text-destructive">{error}</p> : null}
@@ -218,7 +236,7 @@ export function ScoreBoard({
                   <div className="space-y-1">
                     <p className="text-sm font-bold text-black lg:sr-only">Tổng</p>
                     <div className="rounded-lg bg-muted px-3 py-2 text-sm font-bold">
-                      {total(entry[theoryField], entry[practiceField])}
+                      {calculateTotal(entry[theoryField], entry[practiceField])}
                     </div>
                   </div>
                 </div>
