@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import * as XLSX from "xlsx";
 import { saveScores } from "@/app/actions/scores";
@@ -18,6 +18,8 @@ type Score = {
 };
 type SortMode = "name" | "code";
 type ScoreType = "semester" | "annual";
+const SELECTED_SCORE_TYPE_STORAGE_KEY = "qllh:selected-score-type";
+
 type ScoreEntry = {
   student_id: string;
   full_name: string;
@@ -204,7 +206,13 @@ export function ScoreBoard({
   annualScores: Score[];
 }) {
   const router = useRouter();
-  const [type, setType] = useState<ScoreType>("semester");
+  const [type, setType] = useState<ScoreType>(() => {
+    if (typeof window === "undefined") return "semester";
+    return window.localStorage.getItem(SELECTED_SCORE_TYPE_STORAGE_KEY) ===
+      "annual"
+      ? "annual"
+      : "semester";
+  });
   const [sortMode, setSortMode] = useState<SortMode>("name");
   const [entries, setEntries] = useState(() => {
     const semesterMap = new Map(semesterScores.map((s) => [s.student_id, s]));
@@ -222,6 +230,10 @@ export function ScoreBoard({
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, startTransition] = useTransition();
+
+  useEffect(() => {
+    window.localStorage.setItem(SELECTED_SCORE_TYPE_STORAGE_KEY, type);
+  }, [type]);
 
   const ordered = useMemo(
     () =>
