@@ -173,7 +173,7 @@ profiles
 - Unique partial: tên lớp + năm học theo giáo viên (active); `student_code` theo lớp (active).
 - `students` có `UNIQUE (id, class_id)` để attendance/events FK kép không lệch lớp.
 - Tuần học: `TOTAL_WEEKS = 35` trong `src/lib/weeks.ts`; không tạo 35 cột.
-- Tổng điểm học tập = generated column `(theory + practice) / 2` trên DB.
+- Tổng điểm học tập = generated column `least(10, ceil(theory + practice))` trên DB; nếu thiếu lý thuyết hoặc thực hành thì tổng là 0.
 - Attendance default UI = PRESENT; persist khi giáo viên lưu tuần / buổi.
 - Tổng phát biểu / điểm thi đua = aggregate từ lịch sử event.
 - Idempotency: cùng `client_request_id` + `created_by` → retry an toàn.

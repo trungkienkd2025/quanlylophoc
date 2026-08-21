@@ -5,7 +5,12 @@ import { z } from "zod";
 import { verifyClassAccess } from "@/lib/classes/access";
 
 const score = z.union([z.literal(""), z.coerce.number().min(0).max(10)]);
-const entrySchema = z.object({ student_id: z.string().uuid(), theory_score: score, practice_score: score });
+const entrySchema = z.object({
+  student_id: z.string().uuid(),
+  theory_score: score,
+  practice_score: score,
+  total_score: z.coerce.number().int().min(0).max(10),
+});
 const saveSchema = z.object({ type: z.enum(["semester", "annual"]), entries: z.array(entrySchema) });
 
 /** Form inputs send strings; Zod coerces to number | "". */
@@ -13,6 +18,7 @@ export type ScoreEntryInput = {
   student_id: string;
   theory_score: string | number | "";
   practice_score: string | number | "";
+  total_score: number;
 };
 
 export async function saveScores(classId: string, type: "semester" | "annual", entries: ScoreEntryInput[]) {
