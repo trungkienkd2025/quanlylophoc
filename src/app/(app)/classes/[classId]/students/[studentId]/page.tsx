@@ -10,20 +10,13 @@ import type { AttendanceStatus } from "@/types/attendance";
 
 function formatScore(value: number | string | null | undefined) {
   if (value == null || value === "") return "—";
-  return String(value);
-}
 
-function calculateDisplayTotal(
-  theory: number | string | null | undefined,
-  practice: number | string | null | undefined,
-) {
-  if (theory == null || theory === "" || practice == null || practice === "") return "—";
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue)) return String(value);
 
-  const theoryScore = Number(theory);
-  const practiceScore = Number(practice);
-  if (!Number.isFinite(theoryScore) || !Number.isFinite(practiceScore)) return "—";
-
-  return String(Math.ceil(theoryScore + practiceScore));
+  return Number.isInteger(numericValue)
+    ? String(numericValue)
+    : numericValue.toFixed(2).replace(/0+$/, "").replace(/\.$/, "");
 }
 
 export default async function StudentDetailPage({
@@ -70,11 +63,13 @@ export default async function StudentDetailPage({
       supabase
         .from("semester_scores")
         .select("theory_score, practice_score, total_score")
+        .eq("class_id", classId)
         .eq("student_id", studentId)
         .maybeSingle(),
       supabase
         .from("annual_scores")
         .select("theory_score, practice_score, total_score")
+        .eq("class_id", classId)
         .eq("student_id", studentId)
         .maybeSingle(),
     ]);
@@ -180,7 +175,7 @@ export default async function StudentDetailPage({
             <DetailField label="Thực hành" value={formatScore(semester?.practice_score)} />
             <DetailField
               label="Tổng"
-              value={calculateDisplayTotal(semester?.theory_score, semester?.practice_score)}
+              value={formatScore(semester?.total_score)}
             />
           </CardContent>
         </Card>
@@ -191,7 +186,7 @@ export default async function StudentDetailPage({
             <DetailField label="Thực hành" value={formatScore(annual?.practice_score)} />
             <DetailField
               label="Tổng"
-              value={calculateDisplayTotal(annual?.theory_score, annual?.practice_score)}
+              value={formatScore(annual?.total_score)}
             />
           </CardContent>
         </Card>
