@@ -9,7 +9,6 @@ const entrySchema = z.object({
   student_id: z.string().uuid(),
   theory_score: score,
   practice_score: score,
-  total_score: z.coerce.number().int().min(0).max(20),
 });
 const saveSchema = z.object({
   type: z.enum(["semester", "annual"]),
@@ -21,7 +20,6 @@ export type ScoreEntryInput = {
   student_id: string;
   theory_score: string | number | "";
   practice_score: string | number | "";
-  total_score: number;
 };
 
 export async function saveScores(
@@ -39,8 +37,11 @@ export async function saveScores(
     theory_score: entry.theory_score === "" ? null : entry.theory_score,
     practice_score: entry.practice_score === "" ? null : entry.practice_score,
   }));
-  const table = parsed.data.type === "semester" ? "semester_scores" : "annual_scores";
-  const { error } = await access.supabase.from(table).upsert(rows, { onConflict: "student_id" });
+  const table =
+    parsed.data.type === "semester" ? "semester_scores" : "annual_scores";
+  const { error } = await access.supabase
+    .from(table)
+    .upsert(rows, { onConflict: "student_id" });
   if (error) return { error: "Chưa thể lưu điểm. Vui lòng thử lại." };
   revalidatePath(`/classes/${access.classId}/scores`);
   revalidatePath(`/classes/${access.classId}/students`);

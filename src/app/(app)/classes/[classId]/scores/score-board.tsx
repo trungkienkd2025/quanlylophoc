@@ -4,6 +4,10 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import * as XLSX from "xlsx";
 import { saveScores } from "@/app/actions/scores";
+import {
+  calculateLearningScoreTotal,
+  normalizeComponentScore,
+} from "@/lib/scores/calculate";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -34,27 +38,11 @@ function fmt(value: number | null | undefined) {
   return value == null ? "" : String(value);
 }
 
-function clampScore(value: string | number) {
-  const score = Number(value);
-  if (!Number.isFinite(score)) return null;
-  return Math.min(10, Math.max(0, score));
-}
-
-export function calculateTotal(
-  theory: string | number,
-  practice: string | number,
-) {
-  const theoryScore = clampScore(theory);
-  const practiceScore = clampScore(practice);
-  if (theoryScore == null || practiceScore == null) return 0;
-  const sum = theoryScore + practiceScore;
-  const rounded = Math.ceil(sum);
-  return rounded;
-}
+export const calculateTotal = calculateLearningScoreTotal;
 
 function normalizeScoreInput(value: string) {
   if (value === "") return value;
-  const score = clampScore(value);
+  const score = normalizeComponentScore(value);
   return score == null ? value : String(score);
 }
 
@@ -287,10 +275,6 @@ export function ScoreBoard({
             type === "semester" ? entry.semesterTheory : entry.annualTheory,
           practice_score:
             type === "semester" ? entry.semesterPractice : entry.annualPractice,
-          total_score: calculateTotal(
-            type === "semester" ? entry.semesterTheory : entry.annualTheory,
-            type === "semester" ? entry.semesterPractice : entry.annualPractice,
-          ),
         })),
       );
       if (result.error) {
@@ -351,8 +335,8 @@ export function ScoreBoard({
       </div>
 
       <p className="mb-3 text-sm text-muted-foreground">
-        Tổng tự tính: Lý thuyết + Thực hành. Sắp xếp chỉ đổi thứ tự
-        hiển thị.
+        Tổng tự tính: Lý thuyết + Thực hành; nếu có phần thập phân thì làm
+        tròn lên. Sắp xếp chỉ đổi thứ tự hiển thị.
       </p>
       {message ? (
         <p className="mb-2 text-sm text-emerald-600">{message}</p>
