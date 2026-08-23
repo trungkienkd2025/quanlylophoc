@@ -9,7 +9,7 @@ const entrySchema = z.object({
   student_id: z.string().uuid(),
   theory_score: score,
   practice_score: score,
-  total_score: z.coerce.number().int().min(0).max(10),
+  total_score: z.coerce.number().int().min(0).max(20),
 });
 const saveSchema = z.object({ type: z.enum(["semester", "annual"]), entries: z.array(entrySchema) });
 

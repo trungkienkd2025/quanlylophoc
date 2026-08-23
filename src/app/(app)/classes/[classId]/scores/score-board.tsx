@@ -49,7 +49,7 @@ export function calculateTotal(
   if (theoryScore == null || practiceScore == null) return 0;
   const sum = theoryScore + practiceScore;
   const rounded = Math.ceil(sum);
-  return Math.min(10, rounded);
+  return rounded;
 }
 
 function normalizeScoreInput(value: string) {
@@ -351,7 +351,7 @@ export function ScoreBoard({
       </div>
 
       <p className="mb-3 text-sm text-muted-foreground">
-        Tổng tự tính: Lý thuyết + Thực hành, tối đa 10. Sắp xếp chỉ đổi thứ tự
+        Tổng tự tính: Lý thuyết + Thực hành. Sắp xếp chỉ đổi thứ tự
         hiển thị.
       </p>
       {message ? (
