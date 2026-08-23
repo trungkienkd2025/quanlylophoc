@@ -13,6 +13,19 @@ function formatScore(value: number | string | null | undefined) {
   return String(value);
 }
 
+function calculateDisplayTotal(
+  theory: number | string | null | undefined,
+  practice: number | string | null | undefined,
+) {
+  if (theory == null || theory === "" || practice == null || practice === "") return "—";
+
+  const theoryScore = Number(theory);
+  const practiceScore = Number(practice);
+  if (!Number.isFinite(theoryScore) || !Number.isFinite(practiceScore)) return "—";
+
+  return String(Math.ceil(theoryScore + practiceScore));
+}
+
 export default async function StudentDetailPage({
   params,
 }: {
@@ -165,7 +178,10 @@ export default async function StudentDetailPage({
             <p className="text-sm font-medium text-muted-foreground">Học kỳ 1</p>
             <DetailField label="Lý thuyết" value={formatScore(semester?.theory_score)} />
             <DetailField label="Thực hành" value={formatScore(semester?.practice_score)} />
-            <DetailField label="Tổng" value={formatScore(semester?.total_score)} />
+            <DetailField
+              label="Tổng"
+              value={calculateDisplayTotal(semester?.theory_score, semester?.practice_score)}
+            />
           </CardContent>
         </Card>
         <Card>
@@ -173,7 +189,10 @@ export default async function StudentDetailPage({
             <p className="text-sm font-medium text-muted-foreground">Cuối năm</p>
             <DetailField label="Lý thuyết" value={formatScore(annual?.theory_score)} />
             <DetailField label="Thực hành" value={formatScore(annual?.practice_score)} />
-            <DetailField label="Tổng" value={formatScore(annual?.total_score)} />
+            <DetailField
+              label="Tổng"
+              value={calculateDisplayTotal(annual?.theory_score, annual?.practice_score)}
+            />
           </CardContent>
         </Card>
       </div>
