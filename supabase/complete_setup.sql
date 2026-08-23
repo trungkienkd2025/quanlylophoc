@@ -183,7 +183,7 @@ create table public.semester_scores (
   practice_score numeric(4,2) check (practice_score is null or practice_score between 0 and 10),
   total_score numeric(4,2) generated always as (
     case when theory_score is null or practice_score is null then 0
-         else least(10, ceil(theory_score + practice_score)) end
+         else ceil(theory_score + practice_score) end
   ) stored,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
@@ -200,7 +200,7 @@ create table public.annual_scores (
   practice_score numeric(4,2) check (practice_score is null or practice_score between 0 and 10),
   total_score numeric(4,2) generated always as (
     case when theory_score is null or practice_score is null then 0
-         else least(10, ceil(theory_score + practice_score)) end
+         else ceil(theory_score + practice_score) end
   ) stored,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
