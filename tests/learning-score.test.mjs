@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import {
   calculateLearningScoreTotal,
@@ -34,5 +35,20 @@ describe("component score normalization", () => {
     assert.equal(normalizeComponentScore(-1), 0);
     assert.equal(normalizeComponentScore(11), 10);
     assert.equal(normalizeComponentScore("7.5"), 7.5);
+  });
+});
+
+describe("database learning-score formula", () => {
+  it("keeps HK1 and final-year generated totals on the same official formula", () => {
+    const setupSql = readFileSync("supabase/complete_setup.sql", "utf8");
+    const migrationSql = readFileSync(
+      "supabase/migrations/patch_learning_score_total_formula.sql",
+      "utf8",
+    );
+    const officialFormulaPattern =
+      /total_score numeric\(4,2\) generated always as \(\s*case\s+when theory_score is null or practice_score is null then 0\s+else ceil\(theory_score \+ practice_score\)\s+end\s*\) stored/g;
+
+    assert.equal([...setupSql.matchAll(officialFormulaPattern)].length, 2);
+    assert.equal([...migrationSql.matchAll(officialFormulaPattern)].length, 2);
   });
 });
