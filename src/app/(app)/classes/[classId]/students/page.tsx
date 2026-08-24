@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { aggregateStudentPointTotals } from "@/lib/points/format";
+import { calculateLearningScoreTotal } from "@/lib/scores/calculate";
 import { createClient } from "@/lib/supabase/server";
 import { StudentManagement } from "./student-management";
 
@@ -47,11 +48,11 @@ export default async function ClassStudentsPage({
       .eq("class_id", classId),
     supabase
       .from("semester_scores")
-      .select("student_id, total_score")
+      .select("student_id, theory_score, practice_score")
       .eq("class_id", classId),
     supabase
       .from("annual_scores")
-      .select("student_id, total_score")
+      .select("student_id, theory_score, practice_score")
       .eq("class_id", classId),
   ]);
 
@@ -59,11 +60,14 @@ export default async function ClassStudentsPage({
   const semesterScoreTotals = Object.fromEntries(
     (semesterScores ?? []).map((score) => [
       score.student_id,
-      score.total_score,
+      calculateLearningScoreTotal(score.theory_score, score.practice_score),
     ]),
   );
   const annualScoreTotals = Object.fromEntries(
-    (annualScores ?? []).map((score) => [score.student_id, score.total_score]),
+    (annualScores ?? []).map((score) => [
+      score.student_id,
+      calculateLearningScoreTotal(score.theory_score, score.practice_score),
+    ]),
   );
 
   return (

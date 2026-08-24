@@ -18,7 +18,6 @@ type Score = {
   student_id: string;
   theory_score: number | null;
   practice_score: number | null;
-  total_score: number | null;
 };
 type SortMode = "name" | "code";
 type ScoreType = "semester" | "annual";

@@ -26,11 +26,11 @@ export default async function ScoresPage({
     .order("full_name");
   const { data: semesterScores } = await supabase
     .from("semester_scores")
-    .select("student_id, theory_score, practice_score, total_score")
+    .select("student_id, theory_score, practice_score")
     .eq("class_id", classId);
   const { data: annualScores } = await supabase
     .from("annual_scores")
-    .select("student_id, theory_score, practice_score, total_score")
+    .select("student_id, theory_score, practice_score")
     .eq("class_id", classId);
   return (
     <>

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, Pencil } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { attendanceStatusLabel } from "@/lib/attendance/format";
+import { calculateLearningScoreTotal } from "@/lib/scores/calculate";
 import { formatDateTimeVi, formatDateVi, genderLabel } from "@/lib/students/format";
 import { createClient } from "@/lib/supabase/server";
 import { weekLabel, weekNumbers } from "@/lib/weeks";
@@ -62,13 +63,13 @@ export default async function StudentDetailPage({
         .eq("student_id", studentId),
       supabase
         .from("semester_scores")
-        .select("theory_score, practice_score, total_score")
+        .select("theory_score, practice_score")
         .eq("class_id", classId)
         .eq("student_id", studentId)
         .maybeSingle(),
       supabase
         .from("annual_scores")
-        .select("theory_score, practice_score, total_score")
+        .select("theory_score, practice_score")
         .eq("class_id", classId)
         .eq("student_id", studentId)
         .maybeSingle(),
@@ -175,7 +176,12 @@ export default async function StudentDetailPage({
             <DetailField label="Thực hành" value={formatScore(semester?.practice_score)} />
             <DetailField
               label="Tổng"
-              value={formatScore(semester?.total_score)}
+              value={formatScore(
+                calculateLearningScoreTotal(
+                  semester?.theory_score,
+                  semester?.practice_score,
+                ),
+              )}
             />
           </CardContent>
         </Card>
@@ -186,7 +192,12 @@ export default async function StudentDetailPage({
             <DetailField label="Thực hành" value={formatScore(annual?.practice_score)} />
             <DetailField
               label="Tổng"
-              value={formatScore(annual?.total_score)}
+              value={formatScore(
+                calculateLearningScoreTotal(
+                  annual?.theory_score,
+                  annual?.practice_score,
+                ),
+              )}
             />
           </CardContent>
         </Card>
