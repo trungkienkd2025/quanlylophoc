@@ -239,6 +239,12 @@ Chi tiết policy/RPC: [architecture.md](./architecture.md).
 
 ## 10. Commands
 
+### Dependency lockfile (Vercel / Codex web)
+
+- Mọi thay đổi dependency phải commit kèm `package-lock.json`.
+- Không tự sửa hoặc sao chép trường `integrity` trong lockfile. Dùng npm tạo lại lockfile (`npm install --package-lock-only`) và chạy `npm ci` trước khi commit.
+- Nếu Vercel báo `EINTEGRITY`, đối chiếu `dist.integrity` của package với npm registry, sửa/tạo lại lockfile rồi chạy `npm ci`. Không bỏ kiểm tra integrity hoặc dùng `--force` để vượt lỗi.
+
 ```bash
 npm install
 cp .env.example .env.local   # điền Supabase URL + anon key

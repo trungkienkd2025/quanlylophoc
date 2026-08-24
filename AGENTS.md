@@ -45,6 +45,12 @@ npm run typecheck
 npm run build
 ```
 
+## Dependency lockfile (Vercel / Codex web)
+
+- Commit `package-lock.json` together with every dependency change.
+- Never manually write or copy a package `integrity` value. Regenerate the lockfile with npm (for example `npm install --package-lock-only`) and verify with `npm ci` before committing.
+- When Vercel reports `EINTEGRITY`, compare the affected package's `dist.integrity` from the configured npm registry, correct/regenerate the lockfile, then run `npm ci` locally. Do not work around it with `--force` or disabled integrity checks.
+
 ## Where to change code
 
 | Area | Path |
