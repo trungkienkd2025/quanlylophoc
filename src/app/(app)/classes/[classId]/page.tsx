@@ -75,9 +75,6 @@ export default async function ClassDetailPage({
         <h1 className="mt-0.5 text-2xl font-bold">
           LỚP {classItem.name} ( {studentCount} học sinh )
         </h1>
-        <p className="mt-1 text-sm font-semibold text-primary">
-          TUẦN {estimatedWeek}/{TOTAL_WEEKS}
-        </p>
       </header>
 
       <ClassWeeksPanel
