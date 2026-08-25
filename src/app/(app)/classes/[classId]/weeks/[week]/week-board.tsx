@@ -15,7 +15,7 @@ import {
 } from "@/lib/attendance/format";
 import { evaluationLevelOptions } from "@/lib/evaluations/levels";
 import { downloadWeekReportExcel } from "@/lib/weeks/export-excel";
-import { TOTAL_WEEKS, weekLabel } from "@/lib/weeks";
+import { TOTAL_WEEKS } from "@/lib/weeks";
 import { cn } from "@/lib/utils";
 import type { AttendanceStatus } from "@/types/attendance";
 
@@ -187,10 +187,8 @@ export function WeekBoard({
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="text-xs text-muted-foreground">{schoolYear}</p>
-            <h2 className="text-xl font-bold">{className}</h2>
-            <p className="text-sm font-semibold text-primary">
-              {weekLabel(week)} / {TOTAL_WEEKS}
-            </p>
+            <h2 className="text-xl font-bold">LỚP {className} ( {students.length} học sinh )</h2>
+            <p className="text-sm font-semibold text-primary">TUẦN {week}/{TOTAL_WEEKS}</p>
           </div>
           <div className="flex flex-wrap gap-2">
             <Button onClick={handleExport} type="button" variant="outline">
