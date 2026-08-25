@@ -100,8 +100,8 @@ export function WeekBoard({
   const [selectedId, setSelectedId] = useState(() => sortedStudents[0]?.id ?? "");
   const [query, setQuery] = useState("");
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [startDate, setStartDate] = useState(initialStartDate);
-  const [endDate, setEndDate] = useState(initialEndDate);
+  const startDate = initialStartDate;
+  const endDate = initialEndDate;
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, startTransition] = useTransition();
@@ -188,7 +188,6 @@ export function WeekBoard({
           <div>
             <p className="text-xs text-muted-foreground">{schoolYear}</p>
             <h2 className="text-xl font-bold">LỚP {className} ( {students.length} học sinh )</h2>
-            <p className="text-sm font-semibold text-primary">TUẦN {week}/{TOTAL_WEEKS}</p>
           </div>
           <div className="flex flex-wrap gap-2">
             <Button onClick={handleExport} type="button" variant="outline">
@@ -197,27 +196,6 @@ export function WeekBoard({
             <Button disabled={isSaving} onClick={handleSave}>
               {isSaving ? "Đang lưu…" : "Lưu tuần này"}
             </Button>
-          </div>
-        </div>
-
-        <div className="grid max-w-xl gap-3 sm:grid-cols-2">
-          <div className="space-y-1.5">
-            <Label htmlFor="week-start">Từ ngày</Label>
-            <Input
-              id="week-start"
-              onChange={(event) => setStartDate(event.target.value)}
-              type="date"
-              value={startDate}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="week-end">Đến ngày</Label>
-            <Input
-              id="week-end"
-              onChange={(event) => setEndDate(event.target.value)}
-              type="date"
-              value={endDate}
-            />
           </div>
         </div>
       </div>

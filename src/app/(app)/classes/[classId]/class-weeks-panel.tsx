@@ -3,6 +3,8 @@
 import { useMemo, useState } from "react";
 import { WeekBoard } from "@/app/(app)/classes/[classId]/weeks/[week]/week-board";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { toWeeklyAttendanceStatus } from "@/lib/attendance/format";
 import { DEFAULT_EVALUATION_LEVELS } from "@/lib/evaluations/levels";
 import { TOTAL_WEEKS, weekLabel, weekNumbers } from "@/lib/weeks";
@@ -48,6 +50,7 @@ export function ClassWeeksPanel({
   initialWeek: number;
 }) {
   const [selectedWeek, setSelectedWeek] = useState<number>(initialWeek);
+  const [dateOverrides, setDateOverrides] = useState<Record<number, { start_date: string; end_date: string }>>({});
 
   const savedWeeks = useMemo(() => {
     const set = new Set<number>();
@@ -107,16 +110,50 @@ export function ClassWeeksPanel({
   }, [weekEvaluations]);
 
   const meta = weekMetas.find((item) => item.week_number === selectedWeek);
+  const selectedDates = dateOverrides[selectedWeek] ?? {
+    start_date: meta?.start_date ?? "",
+    end_date: meta?.end_date ?? "",
+  };
+
+  function updateSelectedDate(field: "start_date" | "end_date", value: string) {
+    setDateOverrides((current) => ({
+      ...current,
+      [selectedWeek]: {
+        start_date: selectedDates.start_date,
+        end_date: selectedDates.end_date,
+        [field]: value,
+      },
+    }));
+  }
 
   return (
     <section aria-labelledby="week-grid" className="space-y-4">
-      <div>
-        <h2 className="mb-1 text-base font-bold" id="week-grid">
-          Tuần 1 → {TOTAL_WEEKS}
-        </h2>
-        <p className="mb-3 text-xs text-muted-foreground">
-          Chọn tuần bên dưới. Dấu · nhỏ = tuần đã có dữ liệu.
-        </p>
+      <div className="space-y-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <h2 className="text-sm font-semibold text-primary" id="week-grid">
+            TUẦN {selectedWeek}/{TOTAL_WEEKS}
+          </h2>
+          <div className="grid w-full max-w-xl gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="week-start">Từ ngày</Label>
+              <Input
+                id="week-start"
+                onChange={(event) => updateSelectedDate("start_date", event.target.value)}
+                type="date"
+                value={selectedDates.start_date}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="week-end">Đến ngày</Label>
+              <Input
+                id="week-end"
+                onChange={(event) => updateSelectedDate("end_date", event.target.value)}
+                type="date"
+                value={selectedDates.end_date}
+              />
+            </div>
+          </div>
+        </div>
         <div className="flex flex-wrap gap-1.5">
           {weekNumbers().map((week) => {
             const isSelected = selectedWeek === week;
@@ -185,12 +222,12 @@ export function ClassWeeksPanel({
           attendance={weekAttendance}
           classId={classId}
           className={className}
-          endDate={meta?.end_date ?? ""}
+          endDate={selectedDates.end_date}
           evaluations={weekEvaluations}
           key={selectedWeek}
           onWeekChange={setSelectedWeek}
           schoolYear={schoolYear}
-          startDate={meta?.start_date ?? ""}
+          startDate={selectedDates.start_date}
           students={students}
           week={selectedWeek}
         />
