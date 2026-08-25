@@ -138,7 +138,6 @@ export function StudentQuizClient({ initialQuestions, initialVideos = [], return
       }
     }
     setSelectedGrade(grade);
-    setShowAllMaterials(false);
     setIsQuizStarted(false);
     setIsSubmitted(false);
     setSelectedAnswers({});
@@ -526,15 +525,15 @@ export function StudentQuizClient({ initialQuestions, initialVideos = [], return
                         >
                           Bắt đầu làm bài
                         </Button>
-                        <a href="#video-lessons">
-                          <Button
-                            variant="outline"
-                            size="lg"
-                            className="bg-white/10 hover:bg-white/20 text-white border-white/30 font-extrabold h-12 px-6 rounded-2xl backdrop-blur-sm"
-                          >
-                            Học liệu số
-                          </Button>
-                        </a>
+                        <Button
+                          type="button"
+                          onClick={() => handleShowAllMaterials("video-lessons")}
+                          variant="outline"
+                          size="lg"
+                          className="bg-white/10 hover:bg-white/20 text-white border-white/30 font-extrabold h-12 px-6 rounded-2xl backdrop-blur-sm"
+                        >
+                          Học liệu số
+                        </Button>
                       </div>
                     </div>
                   </section>
