@@ -27,6 +27,7 @@ export function StudentQuizClient({ initialQuestions, initialVideos = [], return
   // Lưu danh sách câu hỏi và học liệu động
   const [questions, setQuestions] = useState<QuizQuestion[]>(initialQuestions);
   const [videos, setVideos] = useState<LessonVideo[]>(initialVideos);
+  const [showAllMaterials, setShowAllMaterials] = useState(false);
 
   // Trạng thái chung
   const [studentName, setStudentName] = useState("");
@@ -110,7 +111,7 @@ export function StudentQuizClient({ initialQuestions, initialVideos = [], return
       try {
         const [qData, vData] = await Promise.all([
           getQuizQuestions(selectedGrade, false, teacherId || undefined),
-          getLessonVideos(selectedGrade, teacherId || undefined)
+          getLessonVideos(showAllMaterials ? undefined : selectedGrade, teacherId || undefined)
         ]);
         if (active) {
           setQuestions(qData);
@@ -128,7 +129,7 @@ export function StudentQuizClient({ initialQuestions, initialVideos = [], return
     return () => {
       active = false;
     };
-  }, [selectedGrade, isQuizStarted, teacherId]);
+  }, [selectedGrade, isQuizStarted, teacherId, showAllMaterials]);
 
   function handleGradeChange(grade: number) {
     if (isQuizStarted && !isSubmitted) {
@@ -137,6 +138,7 @@ export function StudentQuizClient({ initialQuestions, initialVideos = [], return
       }
     }
     setSelectedGrade(grade);
+    setShowAllMaterials(false);
     setIsQuizStarted(false);
     setIsSubmitted(false);
     setSelectedAnswers({});
@@ -146,6 +148,23 @@ export function StudentQuizClient({ initialQuestions, initialVideos = [], return
     localStorage.removeItem("qllh.quiz.isSubmitted");
     localStorage.removeItem("qllh.quiz.answers");
     localStorage.removeItem("qllh.quiz.score");
+  }
+
+
+  async function handleShowAllMaterials(targetId = "video-lessons") {
+    setShowAllMaterials(true);
+    setIsLoadingData(true);
+    try {
+      const allVideos = await getLessonVideos(undefined, teacherId || undefined);
+      setVideos(allVideos);
+    } catch (err) {
+      console.error("Lỗi khi tải toàn bộ học liệu:", err);
+    } finally {
+      setIsLoadingData(false);
+      requestAnimationFrame(() => {
+        document.getElementById(targetId)?.scrollIntoView({ behavior: "smooth" });
+      });
+    }
   }
 
   function handleGoHome() {
@@ -610,7 +629,9 @@ export function StudentQuizClient({ initialQuestions, initialVideos = [], return
                     </h2>
                     {videos.length === 0 ? (
                       <Card className="border-sky-100 shadow-sm rounded-3xl bg-white p-8 text-center text-muted-foreground font-normal">
-                        Chưa có video bài học nào cho khối {selectedGrade}. Giáo viên có thể thêm video trong trang quản lý.
+                        {showAllMaterials
+                          ? "Chưa có học liệu số nào. Giáo viên có thể thêm học liệu trong trang quản lý."
+                          : `Chưa có video bài học nào cho khối ${selectedGrade}. Giáo viên có thể thêm video trong trang quản lý.`}
                       </Card>
                     ) : (
                       <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3">
@@ -723,11 +744,14 @@ export function StudentQuizClient({ initialQuestions, initialVideos = [], return
                           <RefreshCw className="size-4 mr-1.5" />
                           Làm bài lại
                         </Button>
-                        <a href="#video-lessons-submitted">
-                          <Button variant="outline" className="border-sky-200 text-sky-700 bg-white hover:bg-sky-50 rounded-2xl h-11 px-5">
-                            Học liệu số
-                          </Button>
-                        </a>
+                        <Button
+                          type="button"
+                          onClick={() => handleShowAllMaterials("video-lessons-submitted")}
+                          variant="outline"
+                          className="border-sky-200 text-sky-700 bg-white hover:bg-sky-50 rounded-2xl h-11 px-5"
+                        >
+                          Học liệu số
+                        </Button>
                       </div>
                     </CardContent>
                   </Card>
@@ -898,7 +922,9 @@ export function StudentQuizClient({ initialQuestions, initialVideos = [], return
                       </h2>
                       {videos.length === 0 ? (
                         <Card className="border-sky-100 shadow-sm rounded-3xl bg-white p-8 text-center text-muted-foreground font-normal">
-                          Chưa có video bài học nào cho khối {selectedGrade}.
+                          {showAllMaterials
+                            ? "Chưa có học liệu số nào. Giáo viên có thể thêm học liệu trong trang quản lý."
+                            : `Chưa có video bài học nào cho khối ${selectedGrade}.`}
                         </Card>
                       ) : (
                         <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
