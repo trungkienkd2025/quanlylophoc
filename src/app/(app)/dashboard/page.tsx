@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { GraduationCap, UsersRound, Video } from "lucide-react";
+import { Gamepad2, GraduationCap, UsersRound, Video } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/server";
 
@@ -31,7 +31,7 @@ export default async function DashboardPage() {
         )}
       </header>
 
-      <section className="grid gap-4 sm:grid-cols-3">
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Link href="/class-management" className="block">
           <Card
             className="h-full border-sky-200 bg-gradient-to-br from-sky-100 via-white to-sky-50 shadow-sm transition hover:border-sky-300 hover:shadow-md cursor-pointer"
@@ -87,6 +87,26 @@ export default async function DashboardPage() {
                 </h2>
                 <p className="text-xs text-muted-foreground font-normal text-slate-600">
                   Quản lý liên kết video bài giảng theo khối lớp 1–5
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/entertainment" className="block">
+          <Card
+            className="h-full border-amber-200 bg-gradient-to-br from-amber-100 via-white to-orange-50 shadow-sm transition hover:border-amber-300 hover:shadow-md cursor-pointer"
+            size="sm"
+          >
+            <CardContent className="flex items-center gap-4 py-5">
+              <div className="grid size-12 shrink-0 place-items-center rounded-2xl bg-amber-500 text-white">
+                <Gamepad2 className="size-6" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-amber-950">
+                  Giải trí
+                </h2>
+                <p className="text-xs text-muted-foreground font-normal text-slate-600">
+                  Không gian trò chơi và hoạt động thư giãn cho lớp học
                 </p>
               </div>
             </CardContent>
