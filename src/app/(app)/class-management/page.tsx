@@ -144,9 +144,6 @@ export default async function ClassManagementPage() {
       <header className="mb-4">
         <p className="text-xs text-muted-foreground">Khu vực quản lý</p>
         <h1 className="text-2xl font-bold tracking-tight">Quản lý lớp học</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Chọn năm học → lớp → tuần để điểm danh và đánh giá.
-        </p>
       </header>
 
       <section className="mb-5 grid gap-2 sm:grid-cols-3">
@@ -204,8 +201,7 @@ export default async function ClassManagementPage() {
                       {year.name}
                     </h2>
                     <p className="text-xs text-muted-foreground">
-                      Gợi ý tuần hiện tại: {weekLabel(currentWeek)} /{" "}
-                      {TOTAL_WEEKS}
+                      TUẦN HIỆN TẠI {currentWeek}/{TOTAL_WEEKS}
                     </p>
                   </div>
                   {persistedYearIds.has(year.id) ? (
