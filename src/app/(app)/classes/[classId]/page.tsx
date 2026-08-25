@@ -19,7 +19,7 @@ export default async function ClassDetailPage({
 
   const { data: classItem } = await supabase
     .from("classes")
-    .select("id, name, school_year, grade")
+    .select("id, name, school_year")
     .eq("id", classId)
     .is("deleted_at", null)
     .maybeSingle();
@@ -39,8 +39,6 @@ export default async function ClassDetailPage({
     .eq("class_id", classId)
     .is("deleted_at", null)
     .order("full_name");
-
-  const studentCount = students?.length ?? 0;
 
   const [{ data: allAttendance }, { data: allEvaluations }, weekMetasResult] = await Promise.all([
     supabase
@@ -69,12 +67,7 @@ export default async function ClassDetailPage({
       </Link>
 
       <header className="mb-4">
-        <p className="text-xs text-muted-foreground">
-          Năm học {classItem.school_year} · Khối {classItem.grade}
-        </p>
-        <h1 className="mt-0.5 text-2xl font-bold">
-          LỚP {classItem.name} ( {studentCount} học sinh )
-        </h1>
+        <h1 className="text-2xl font-bold">NHẬN XÉT</h1>
       </header>
 
       <ClassWeeksPanel
