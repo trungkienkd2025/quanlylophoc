@@ -21,6 +21,31 @@ type ClassRow = {
   school_year_id: string | null;
 };
 
+const CLASS_CARD_GRADE_BACKGROUNDS: Record<number, string> = {
+  1: "bg-[#fff4ec]",
+  2: "bg-[#f5f0ff]",
+  3: "bg-[#eef8ff]",
+  4: "bg-[#fff9e6]",
+  5: "bg-[#f0fbf3]",
+};
+
+const CLASS_CARD_FALLBACK_BACKGROUNDS = [
+  "bg-[#eef8ff]",
+  "bg-[#fff9e6]",
+  "bg-[#f0fbf3]",
+  "bg-[#f5f0ff]",
+  "bg-[#fff4ec]",
+] as const;
+
+function getClassCardBackground(grade: number) {
+  return (
+    CLASS_CARD_GRADE_BACKGROUNDS[grade] ??
+    CLASS_CARD_FALLBACK_BACKGROUNDS[
+      Math.abs(grade) % CLASS_CARD_FALLBACK_BACKGROUNDS.length
+    ]
+  );
+}
+
 export const metadata: Metadata = {
   title: "Quản lý lớp học — QLLH",
   description: "Quản lý năm học, lớp học và học sinh",
@@ -217,7 +242,9 @@ export default async function ClassManagementPage() {
                           key={classItem.id}
                         >
                           <Card
-                            className="h-full transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md"
+                            className={`${getClassCardBackground(
+                              classItem.grade,
+                            )} h-full transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md`}
                             size="sm"
                           >
                             <CardContent>
