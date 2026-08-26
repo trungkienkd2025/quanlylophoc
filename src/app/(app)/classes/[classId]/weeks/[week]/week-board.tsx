@@ -184,12 +184,8 @@ export function WeekBoard({
   return (
     <div className="space-y-4">
       <div className="space-y-3">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <p className="text-xs text-muted-foreground">{schoolYear}</p>
-            <h2 className="text-xl font-bold">LỚP {className} ( {students.length} học sinh )</h2>
-          </div>
-          <div className="flex flex-wrap gap-2">
+        <div className="flex justify-center">
+          <div className="flex flex-wrap justify-center gap-2">
             <Button onClick={handleExport} type="button" variant="outline">
               Xuất Excel (cả lớp)
             </Button>
