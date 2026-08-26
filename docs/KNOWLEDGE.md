@@ -82,6 +82,7 @@ Khi conflict giữa master prompt và code/docs trong repo: **ưu tiên code + f
 9. **Báo cáo lớp:** lọc hôm nay / tuần / tháng / khoảng ngày.
 10. **Bảo mật:** proxy + layout; RLS; lỗi kỹ thuật không lộ ra UI.
 11. **Health:** `npm run lint`, `npm run typecheck`, `npm run build`.
+12. **Giải trí:** giáo viên quản lý video YouTube theo khối lớp; mỗi giáo viên chỉ xem và chỉnh sửa danh sách video của mình.
 
 ### Chưa có (backlog có chủ đích)
 
@@ -165,6 +166,7 @@ profiles
               ├── attendance (student_id, class_id, date, status)  UNIQUE(student_id, date)  -- legacy/day session
               ├── participation_events (points ±1, client_request_id)
               └── student_points (points ≠ 0, reason, client_request_id)
+  └── entertainment_videos (teacher_id, title, description, youtube_url, grade 1-5, order_index)
 ```
 
 ### Ràng buộc quan trọng

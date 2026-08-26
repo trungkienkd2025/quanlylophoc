@@ -17,6 +17,8 @@ docs/                        # quyết định kỹ thuật, deploy
 
 Server Components load dữ liệu trang; Server Actions xử lý mutation. Thao tác nhanh (phát biểu, điểm) gọi RPC với `client_request_id` idempotent. RLS là hàng rào bảo mật cuối cùng.
 
+Trang **Giải trí** dùng bảng `entertainment_videos` riêng, gắn trực tiếp với `teacher_id`. Giáo viên thêm liên kết YouTube, tiêu đề, mô tả, khối lớp và thứ tự hiển thị; không dùng chung học liệu số để nội dung giải trí không lẫn với bài giảng.
+
 ## Review và schema cuối cùng
 
 Model gốc phù hợp, với các thay đổi sau:
@@ -39,6 +41,7 @@ Model gốc phù hợp, với các thay đổi sau:
 - Bảng đánh giá tuần và điểm học tập dùng policy theo lớp cha, giống attendance.
 - `students`, `attendance`, `participation_events`, `student_points` chỉ được đọc/ghi khi lớp cha thuộc giáo viên hiện tại và chưa xoá mềm.
 - Profile chỉ cho chủ sở hữu đọc/cập nhật; trigger tạo profile khi Auth tạo user.
+- `entertainment_videos` chỉ cho phép giáo viên sở hữu hàng dữ liệu đọc, thêm, sửa và xoá (`teacher_id = auth.uid()`).
 - Client dùng anon key, không dùng service-role key. Policies bảo vệ cả khi người dùng sửa URL hay tự tạo request.
 - RPC mutation xác minh quyền sở hữu và active student ở database. `SECURITY INVOKER` giữ nguyên ngữ cảnh RLS.
 
