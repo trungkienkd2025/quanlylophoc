@@ -25,6 +25,11 @@ File này gồm: reset schema ứng dụng + tạo bảng (năm học, lớp, h�
 > Cảnh báo: `complete_setup.sql` **xóa dữ liệu ứng dụng** rồi tạo lại. Chỉ dùng cho project mới hoặc khi cố ý reset. Không chạy trên dữ liệu học sinh thật.
 
 Seed demo (tuỳ chọn, file riêng): `supabase/seed.demo.sql`.
+
+### Cập nhật project đã có dữ liệu
+
+Không chạy lại `complete_setup.sql` vì file này sẽ xoá dữ liệu ứng dụng. Với tính năng video giải trí, mở **SQL Editor**, chạy toàn bộ file `supabase/patch_entertainment_videos.sql` một lần, rồi thử thêm lại liên kết YouTube. Patch này tạo bảng, cấp quyền cho người dùng đã đăng nhập và giữ RLS để mỗi giáo viên chỉ xem/sửa video của mình.
+
 ### 3. Cấu hình Authentication
 
 1. **Authentication** → **Providers** → bật **Email**.

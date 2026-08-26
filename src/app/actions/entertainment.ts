@@ -60,6 +60,17 @@ export async function createEntertainmentVideo(input: {
       .single();
 
     if (error || !data) {
+      // An existing Supabase project may not have received the forward-only
+      // entertainment_videos patch yet. Keep database details out of the UI,
+      // while making this deployment issue actionable for the teacher.
+      if (error?.code === "42P01" || error?.code === "42501") {
+        return {
+          success: false,
+          error: "Chức năng lưu video chưa sẵn sàng. Vui lòng báo quản trị viên cập nhật hệ thống.",
+        };
+      }
+
+      console.error("Unable to save entertainment video", { code: error?.code });
       return { success: false, error: "Không thể lưu video. Vui lòng thử lại." };
     }
 
