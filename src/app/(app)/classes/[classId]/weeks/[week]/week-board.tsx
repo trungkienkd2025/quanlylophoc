@@ -200,10 +200,6 @@ export function WeekBoard({
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
       <div className="rounded-xl border bg-card p-3 sm:p-4">
-        <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-muted-foreground">
-          Nhận xét
-        </h3>
-
         {students.length === 0 ? (
           <Card>
             <CardContent className="py-4 text-center text-sm text-muted-foreground">
@@ -216,7 +212,7 @@ export function WeekBoard({
         ) : (
           <div className="space-y-4">
             <div className="relative">
-              <Label className="mb-1.5 block">Học sinh</Label>
+              <Label className="mb-1.5 block text-base font-bold">Học sinh</Label>
               <button
                 className="flex h-10 w-full items-center justify-between rounded-lg border bg-background px-3 text-left text-sm"
                 onClick={() => setPickerOpen((open) => !open)}
