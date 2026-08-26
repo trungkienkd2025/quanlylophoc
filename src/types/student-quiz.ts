@@ -38,3 +38,12 @@ export interface LessonVideo {
   thumbnailUrl?: string | null;
   createdAt?: string;
 }
+
+export interface EntertainmentVideo {
+  id?: string;
+  title: string;
+  description: string;
+  youtubeUrl: string;
+  grade?: number;
+  orderIndex?: number;
+}
