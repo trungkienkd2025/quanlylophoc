@@ -89,14 +89,21 @@ export function ClassWeeksPanel({
   );
 
   const attendanceSummary = useMemo(() => {
-    let present = 0;
-    let absent = 0;
+    const activeStudentIds = new Set(students.map((student) => student.id));
+    const absentStudentIds = new Set<string>();
+
     for (const row of weekAttendance) {
-      if (toWeeklyAttendanceStatus(row.status) === "PRESENT") present += 1;
-      else absent += 1;
+      if (!activeStudentIds.has(row.student_id)) continue;
+      if (toWeeklyAttendanceStatus(row.status) !== "PRESENT") {
+        absentStudentIds.add(row.student_id);
+      }
     }
+
+    const absent = absentStudentIds.size;
+    const present = Math.max(students.length - absent, 0);
+
     return { present, absent };
-  }, [weekAttendance]);
+  }, [students, weekAttendance]);
 
   const evaluationSummary = useMemo(() => {
     const counts = new Map<string, number>();
