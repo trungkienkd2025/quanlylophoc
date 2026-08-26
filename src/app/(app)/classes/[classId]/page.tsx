@@ -6,6 +6,10 @@ import { estimateCurrentWeek, TOTAL_WEEKS } from "@/lib/weeks";
 import type { AttendanceStatus } from "@/types/attendance";
 import { ClassWeeksPanel } from "./class-weeks-panel";
 
+function formatSchoolYearTitle(schoolYear: string): string {
+  return schoolYear.replace(/\s*-\s*/, " - ");
+}
+
 export default async function ClassDetailPage({
   params,
   searchParams,
@@ -67,7 +71,12 @@ export default async function ClassDetailPage({
       </Link>
 
       <header className="mb-4">
-        <h1 className="text-2xl font-bold">NHẬN XÉT</h1>
+        <h1 className="text-2xl font-bold">
+          NĂM HỌC {formatSchoolYearTitle(classItem.school_year)}
+        </h1>
+        <p className="mt-2 text-xl font-bold">
+          LỚP {classItem.name} ( {(students ?? []).length} Học sinh )
+        </p>
       </header>
 
       <ClassWeeksPanel
