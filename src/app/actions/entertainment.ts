@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { normalizeYouTubeUrl, entertainmentVideoSchema } from "@/lib/entertainment/validation";
 import { createClient } from "@/lib/supabase/server";
+import { ensureTeacherProfile } from "@/lib/supabase/profile";
 import type { EntertainmentVideo } from "@/types/entertainment";
 
 export async function getEntertainmentVideos(): Promise<EntertainmentVideo[]> {
@@ -47,6 +48,19 @@ export async function createEntertainmentVideo(input: {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { success: false, error: "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại." };
+
+    // Older Supabase projects can have authenticated teachers that predate the
+    // profile trigger. The video table references profiles, so create that
+    // missing record before inserting instead of failing with a foreign-key
+    // error after the teacher has completed the form.
+    const profileResult = await ensureTeacherProfile(supabase, user);
+    if (profileResult.error) {
+      console.error("Unable to ensure teacher profile for entertainment video");
+      return {
+        success: false,
+        error: "Chưa thể thiết lập hồ sơ giáo viên. Vui lòng thử lại.",
+      };
+    }
 
     const { data, error } = await supabase
       .from("entertainment_videos")
