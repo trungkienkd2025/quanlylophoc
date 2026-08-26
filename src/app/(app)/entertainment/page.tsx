@@ -1,9 +1,12 @@
 import Link from "next/link";
-import { ArrowLeft, Gamepad2, Sparkles } from "lucide-react";
+import { ArrowLeft, Gamepad2 } from "lucide-react";
 
-import { Card, CardContent } from "@/components/ui/card";
+import { getEntertainmentVideos } from "@/app/actions/entertainment";
+import { EntertainmentClient } from "./entertainment-client";
 
-export default function EntertainmentPage() {
+export default async function EntertainmentPage() {
+  const videos = await getEntertainmentVideos();
+
   return (
     <div className="space-y-5">
       <Link
@@ -30,22 +33,7 @@ export default function EntertainmentPage() {
         </p>
       </header>
 
-      <Card className="border-amber-100 bg-white shadow-sm" size="sm">
-        <CardContent className="flex flex-col gap-3 py-5 sm:flex-row sm:items-center">
-          <div className="grid size-11 shrink-0 place-items-center rounded-2xl bg-orange-100 text-orange-600">
-            <Sparkles className="size-5" />
-          </div>
-          <div>
-            <h2 className="text-lg font-bold text-slate-900">
-              Nội dung giải trí sẽ được cập nhật
-            </h2>
-            <p className="text-sm text-slate-600">
-              Giáo viên có thể quay lại trang chủ để tiếp tục quản lý lớp học,
-              câu hỏi trắc nghiệm hoặc học liệu số.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      <EntertainmentClient initialVideos={videos} />
     </div>
   );
 }
