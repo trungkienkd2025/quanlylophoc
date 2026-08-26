@@ -268,8 +268,10 @@ export function WeekBoard({
               <>
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <p className="font-semibold">{selected.full_name}</p>
-                    <p className="text-xs text-muted-foreground">{selected.student_code}</p>
+                    <p className="font-semibold">
+                      {selected.full_name}{" "}
+                      <span className="text-sm text-muted-foreground">({selected.student_code})</span>
+                    </p>
                   </div>
                   <span
                     className={cn(
