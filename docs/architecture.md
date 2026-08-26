@@ -32,6 +32,8 @@ Model gốc phù hợp, với các thay đổi sau:
 
 `attendance.class_id`, `weekly_attendance.class_id`, `weekly_evaluations.class_id`, `semester_scores.class_id`, và `annual_scores.class_id` vẫn được lưu để truy vấn theo lớp nhanh, đồng thời FK kép `(student_id, class_id)` ngăn dữ liệu lệch lớp. Luồng chính điểm danh/đánh giá theo **tuần** (`week_number` 1–35); điểm danh theo **ngày** vẫn giữ cho buổi học cũ. Điểm học tập lưu lý thuyết / thực hành và `total_score` là generated column dùng cùng công thức cho HK1 và cuối năm: thiếu thành phần thì 0, đủ hai thành phần thì `ceil(theory_score + practice_score)`. `school_years` là cấp sở hữu năm học; `classes.school_year_id` gắn lớp vào năm.
 
+Khu vực giải trí dùng bảng `entertainment_videos` độc lập, gồm `teacher_id`, tên, mô tả và URL YouTube đã chuẩn hoá về dạng nhúng. Đây không phải học liệu theo khối lớp; RLS chỉ cho phép giáo viên tạo, xem, sửa hoặc xoá bản ghi của chính mình.
+
 ## RLS strategy
 
 - Mọi bảng nghiệp vụ đều bật RLS.
@@ -39,6 +41,7 @@ Model gốc phù hợp, với các thay đổi sau:
 - Bảng đánh giá tuần và điểm học tập dùng policy theo lớp cha, giống attendance.
 - `students`, `attendance`, `participation_events`, `student_points` chỉ được đọc/ghi khi lớp cha thuộc giáo viên hiện tại và chưa xoá mềm.
 - Profile chỉ cho chủ sở hữu đọc/cập nhật; trigger tạo profile khi Auth tạo user.
+- `entertainment_videos` chỉ cho phép chủ sở hữu `teacher_id = auth.uid()` đọc và ghi, nên video giải trí của giáo viên không lộ sang giáo viên khác.
 - Client dùng anon key, không dùng service-role key. Policies bảo vệ cả khi người dùng sửa URL hay tự tạo request.
 - RPC mutation xác minh quyền sở hữu và active student ở database. `SECURITY INVOKER` giữ nguyên ngữ cảnh RLS.
 

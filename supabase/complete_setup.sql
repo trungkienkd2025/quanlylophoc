@@ -693,6 +693,15 @@ create table public.lesson_videos (
   updated_at timestamptz not null default now()
 );
 
+create table public.entertainment_videos (
+  id uuid primary key default gen_random_uuid(),
+  teacher_id uuid not null references public.profiles(id) on delete cascade,
+  title text not null check (char_length(btrim(title)) > 0 and char_length(title) <= 160),
+  description text not null check (char_length(btrim(description)) > 0 and char_length(description) <= 500),
+  youtube_url text not null check (char_length(btrim(youtube_url)) > 0),
+  created_at timestamptz not null default now()
+);
+
 create table public.quiz_submissions (
   id uuid primary key default gen_random_uuid(),
   teacher_id uuid references public.profiles(id) on delete cascade,
@@ -706,11 +715,13 @@ create table public.quiz_submissions (
 -- Indexes for performance
 create index if not exists quiz_questions_teacher_id_idx on public.quiz_questions (teacher_id);
 create index if not exists lesson_videos_teacher_id_idx on public.lesson_videos (teacher_id);
+create index if not exists entertainment_videos_teacher_created_idx on public.entertainment_videos (teacher_id, created_at desc);
 create index if not exists quiz_submissions_teacher_id_idx on public.quiz_submissions (teacher_id);
 
 -- Enable RLS
 alter table public.quiz_questions enable row level security;
 alter table public.lesson_videos enable row level security;
+alter table public.entertainment_videos enable row level security;
 alter table public.quiz_submissions enable row level security;
 
 -- Policies for quiz_questions
@@ -728,6 +739,11 @@ create policy "Allow public read lesson videos"
 
 create policy "Allow authenticated write lesson videos"
   on public.lesson_videos for all
+  using (auth.uid() = teacher_id)
+  with check (auth.uid() = teacher_id);
+
+create policy "Teachers manage own entertainment videos"
+  on public.entertainment_videos for all
   using (auth.uid() = teacher_id)
   with check (auth.uid() = teacher_id);
 
