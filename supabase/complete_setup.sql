@@ -724,6 +724,8 @@ alter table public.lesson_videos enable row level security;
 alter table public.entertainment_videos enable row level security;
 alter table public.quiz_submissions enable row level security;
 
+grant select, insert, update, delete on table public.entertainment_videos to authenticated;
+
 -- Policies for quiz_questions
 create policy "Allow public read quiz questions"
   on public.quiz_questions for select using (true);
