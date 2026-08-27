@@ -82,7 +82,7 @@ Khi conflict giữa master prompt và code/docs trong repo: **ưu tiên code + f
 9. **Báo cáo lớp:** lọc hôm nay / tuần / tháng / khoảng ngày.
 10. **Bảo mật:** proxy + layout; RLS; lỗi kỹ thuật không lộ ra UI.
 11. **Health:** `npm run lint`, `npm run typecheck`, `npm run build`.
-12. **Giải trí:** giáo viên thêm video YouTube bằng tên, mô tả và liên kết; video chỉ hiển thị trong không gian giải trí của chính giáo viên.
+12. **Giải trí:** giáo viên thêm video YouTube bằng tên, mô tả và liên kết; học sinh đã nhập mã lớp của giáo viên có thể xem video tại mục Giải trí bên dưới Học liệu số ở cổng học sinh. Giáo viên vẫn chỉ quản lý video của chính mình.
 
 ### Chưa có (backlog có chủ đích)
 
@@ -179,7 +179,7 @@ profiles
 - Attendance default UI = PRESENT; persist khi giáo viên lưu tuần / buổi.
 - Tổng phát biểu / điểm thi đua = aggregate từ lịch sử event.
 - Idempotency: cùng `client_request_id` + `created_by` → retry an toàn.
-- Video giải trí chỉ nhận URL YouTube hợp lệ và được chuẩn hoá thành URL nhúng; mỗi giáo viên chỉ đọc/ghi video của mình.
+- Video giải trí chỉ nhận URL YouTube hợp lệ và được chuẩn hoá thành URL nhúng; mỗi giáo viên chỉ đọc/ghi video của mình. Cổng học sinh lấy video qua RPC chỉ đọc sau khi có mã lớp của giáo viên.
 - Timezone báo cáo / ngày: chuẩn hoá **Asia/Ho_Chi_Minh** (`src/lib/dates.ts`).
 
 ### Năm học UI

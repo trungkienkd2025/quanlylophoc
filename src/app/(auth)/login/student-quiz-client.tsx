@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useRef } from "react";
 import { QuizQuestion, LessonVideo } from "@/types/student-quiz";
+import type { EntertainmentVideo } from "@/types/entertainment";
 import { getQuizQuestions, getLessonVideos, submitQuizResult, verifyTeacherCode } from "@/app/actions/student-quiz";
+import { getEntertainmentVideosForTeacherCode } from "@/app/actions/entertainment";
 import { LoginForm } from "./login-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +13,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import {
   BookOpenCheck, Clock, Award,
   ChevronRight, RefreshCw, Check, X, LogIn, ChevronLeft,
-  Play, Users, BookOpen, Presentation, FileText, ExternalLink
+  Play, Users, BookOpen, Presentation, FileText, ExternalLink, Gamepad2
 } from "lucide-react";
 
 interface Props {
@@ -28,6 +30,7 @@ export function StudentQuizClient({ initialQuestions, initialVideos = [], return
   const [questions, setQuestions] = useState<QuizQuestion[]>(initialQuestions);
   const [videos, setVideos] = useState<LessonVideo[]>(initialVideos);
   const [showAllMaterials, setShowAllMaterials] = useState(false);
+  const [entertainmentVideos, setEntertainmentVideos] = useState<EntertainmentVideo[]>([]);
 
   // Trạng thái chung
   const [studentName, setStudentName] = useState("");
@@ -131,6 +134,27 @@ export function StudentQuizClient({ initialQuestions, initialVideos = [], return
     };
   }, [selectedGrade, isQuizStarted, teacherId, showAllMaterials]);
 
+  useEffect(() => {
+    let active = true;
+
+    if (!teacherCode) {
+      setEntertainmentVideos([]);
+      return () => {
+        active = false;
+      };
+    }
+
+    getEntertainmentVideosForTeacherCode(teacherCode).then((loadedVideos) => {
+      if (active) setEntertainmentVideos(loadedVideos);
+    }).catch(() => {
+      if (active) setEntertainmentVideos([]);
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [teacherCode]);
+
   function handleGradeChange(grade: number) {
     if (isQuizStarted && !isSubmitted) {
       if (!confirm("Em đang làm bài trắc nghiệm. Thay đổi khối lớp sẽ khởi động lại bài tập. Em có đồng ý không?")) {
@@ -149,6 +173,26 @@ export function StudentQuizClient({ initialQuestions, initialVideos = [], return
     localStorage.removeItem("qllh.quiz.score");
   }
 
+
+  async function loadEntertainmentVideos(code = teacherCode) {
+    if (!code) {
+      setEntertainmentVideos([]);
+      return;
+    }
+
+    try {
+      setEntertainmentVideos(await getEntertainmentVideosForTeacherCode(code));
+    } catch {
+      setEntertainmentVideos([]);
+    }
+  }
+
+  async function handleShowEntertainment() {
+    await loadEntertainmentVideos();
+    requestAnimationFrame(() => {
+      document.getElementById("entertainment")?.scrollIntoView({ behavior: "smooth" });
+    });
+  }
 
   async function handleShowAllMaterials(targetId = "video-lessons") {
     setShowAllMaterials(true);
@@ -292,6 +336,7 @@ export function StudentQuizClient({ initialQuestions, initialVideos = [], return
       setTeacherCode(null);
       setInputCode("");
       setCodeError(null);
+      setEntertainmentVideos([]);
       localStorage.removeItem("qllh.quiz.teacherId");
       localStorage.removeItem("qllh.quiz.teacherName");
       localStorage.removeItem("qllh.quiz.teacherCode");
@@ -534,6 +579,16 @@ export function StudentQuizClient({ initialQuestions, initialVideos = [], return
                         >
                           Học liệu số
                         </Button>
+                        <Button
+                          type="button"
+                          onClick={handleShowEntertainment}
+                          variant="outline"
+                          size="lg"
+                          className="bg-white/10 hover:bg-white/20 text-white border-white/30 font-extrabold h-12 px-6 rounded-2xl backdrop-blur-sm"
+                        >
+                          <Gamepad2 className="size-4" />
+                          Giải trí
+                        </Button>
                       </div>
                     </div>
                   </section>
@@ -678,6 +733,45 @@ export function StudentQuizClient({ initialQuestions, initialVideos = [], return
                             </Card>
                           );
                         })}
+                      </div>
+                    )}
+                  </section>
+
+                  <section id="entertainment" className="space-y-4 scroll-mt-20">
+                    <h2 className="flex items-center gap-2 text-2xl font-extrabold text-slate-800">
+                      <Gamepad2 className="size-6 text-amber-500" />
+                      🎮 Giải trí: Cùng thư giãn nào!
+                    </h2>
+                    {entertainmentVideos.length === 0 ? (
+                      <Card className="rounded-3xl border-amber-100 bg-white p-8 text-center font-normal text-muted-foreground shadow-sm">
+                        Chưa có video giải trí nào cho lớp. Giáo viên có thể thêm video trong mục Giải trí.
+                      </Card>
+                    ) : (
+                      <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3">
+                        {entertainmentVideos.map((video) => (
+                          <Card key={video.id} className="flex flex-col overflow-hidden rounded-3xl border-amber-100 bg-white shadow-sm transition-transform duration-200 hover:-translate-y-1">
+                            <div className="aspect-video w-full overflow-hidden bg-slate-100">
+                              <iframe
+                                src={video.youtubeUrl}
+                                title={video.title}
+                                className="size-full"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowFullScreen
+                              />
+                            </div>
+                            <CardContent className="flex flex-1 flex-col justify-between p-4">
+                              <div>
+                                <h3 className="text-base font-bold leading-snug text-slate-900">{video.title}</h3>
+                                <p className="mt-2 line-clamp-2 text-xs font-normal text-muted-foreground">{video.description}</p>
+                              </div>
+                              <a href={video.youtubeUrl} target="_blank" rel="noopener noreferrer" className="mt-3 block">
+                                <Button variant="outline" size="sm" className="w-full gap-1 rounded-xl border-amber-100 text-xs font-bold text-amber-700 hover:bg-amber-50">
+                                  Xem trên YouTube <ExternalLink className="size-3" />
+                                </Button>
+                              </a>
+                            </CardContent>
+                          </Card>
+                        ))}
                       </div>
                     )}
                   </section>
