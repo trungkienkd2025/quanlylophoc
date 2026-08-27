@@ -23,12 +23,20 @@ export type EvaluationSummary = {
 };
 
 export type ClassReportData = {
+  classId?: string;
   className: string;
   range: DateRange;
   filter: ReportFilter;
   activeStudents: number;
   absentStudents: number;
   evaluations: EvaluationSummary;
+};
+
+export type MultiClassReportData = {
+  schoolYearName: string;
+  range: DateRange;
+  filter: ReportFilter;
+  reports: ClassReportData[];
 };
 
 export type StudentStatistics = {

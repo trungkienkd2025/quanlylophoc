@@ -53,6 +53,7 @@ function countAbsentStudents(rows: { student_id: string; status: AttendanceStatu
 }
 
 export function buildClassReport(input: {
+  classId?: string;
   className: string;
   filter: ReportFilter;
   range: DateRange;
@@ -61,6 +62,7 @@ export function buildClassReport(input: {
   weeklyEvaluationRows: WeeklyEvaluationRow[];
 }): ClassReportData {
   return {
+    classId: input.classId,
     className: input.className,
     filter: input.filter,
     range: input.range,

@@ -7,26 +7,32 @@ import { Input } from "@/components/ui/input";
 import type { DateRange, ReportFilter } from "@/types/reports";
 
 type ReportFiltersProps = {
-  classId: string;
+  basePath?: string;
+  classId?: string;
   filter: ReportFilter;
   range: DateRange;
 };
 
-export function ReportFilters({ classId, filter, range }: ReportFiltersProps) {
+export function ReportFilters({ basePath, classId, filter, range }: ReportFiltersProps) {
   const router = useRouter();
   const [from, setFrom] = useState(range.start);
   const [to, setTo] = useState(range.end);
+  const reportPath = basePath ?? (classId ? `/classes/${classId}/reports` : "/reports");
 
   function navigate(nextFilter: ReportFilter, customRange?: DateRange) {
-    const params = new URLSearchParams();
+    const [pathname, query = ""] = reportPath.split("?");
+    const params = new URLSearchParams(query);
     params.set("filter", nextFilter);
 
     if (nextFilter === "custom" && customRange) {
       params.set("from", customRange.start);
       params.set("to", customRange.end);
+    } else {
+      params.delete("from");
+      params.delete("to");
     }
 
-    router.push(`/classes/${classId}/reports?${params.toString()}`);
+    router.push(`${pathname}?${params.toString()}`);
   }
 
   return (
