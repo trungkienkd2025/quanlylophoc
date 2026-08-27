@@ -13,7 +13,7 @@ function HeaderSkeleton({ large = false }: { large?: boolean }) {
 
 function CardGridSkeleton({ count = 4 }: { count?: number }) {
   return (
-    <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
+    <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-5">
       {Array.from({ length: count }).map((_, index) => (
         <Card key={index} size="sm">
           <CardContent className="space-y-3">

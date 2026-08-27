@@ -227,7 +227,7 @@ export default async function ClassManagementPage() {
                     </CardContent>
                   </Card>
                 ) : (
-                  <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
+                  <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-5">
                     {yearClasses.map((classItem) => {
                       const studentsCount =
                         studentCountByClass[classItem.id] ?? 0;
