@@ -103,7 +103,10 @@ export default async function ReportsHubPage({
           ) : (
             <Card size="sm">
               <CardContent>
-                <ReportClassSelect classes={visibleClasses} />
+                <ReportClassSelect
+                  allReportsHref={`/reports/all?year=${encodeURIComponent(selectedYear?.id ?? "")}`}
+                  classes={visibleClasses}
+                />
                 <p className="text-xs text-muted-foreground">
                   Các lớp trong cùng năm học được gom vào một menu để màn hình
                   gọn hơn.

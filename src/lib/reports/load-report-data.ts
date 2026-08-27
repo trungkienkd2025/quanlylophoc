@@ -4,7 +4,7 @@ import { sumPointEvents } from "@/lib/points/format";
 import { buildClassReport, buildStudentStatistics, buildTodayDashboard } from "@/lib/reports/aggregate";
 import { getLocalRangeBoundsIso } from "@/lib/reports/range";
 import type { AttendanceStatus } from "@/types/attendance";
-import type { ClassDashboardStats, ClassReportData, DateRange, ReportFilter } from "@/types/reports";
+import type { ClassDashboardStats, ClassReportData, DateRange, MultiClassReportData, ReportFilter } from "@/types/reports";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 async function fetchActiveStudents(supabase: SupabaseClient, classId: string) {
@@ -86,6 +86,7 @@ export async function loadClassReport(
     .order("week_number", { ascending: false });
 
   return buildClassReport({
+    classId,
     className,
     filter,
     range,
@@ -101,6 +102,27 @@ export async function loadClassReport(
       level: row.level,
     })),
   });
+}
+
+export async function loadMultiClassReport(
+  supabase: SupabaseClient,
+  classes: Array<{ id: string; name: string }>,
+  schoolYearName: string,
+  filter: ReportFilter,
+  range: DateRange,
+): Promise<MultiClassReportData> {
+  const reports = await Promise.all(
+    classes.map((classItem) =>
+      loadClassReport(supabase, classItem.id, classItem.name, filter, range),
+    ),
+  );
+
+  return {
+    schoolYearName,
+    filter,
+    range,
+    reports,
+  };
 }
 
 export async function loadStudentStatistics(

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { Label } from "@/components/ui/label";
 
 type ReportClassSelectProps = {
+  allReportsHref: string;
   classes: Array<{
     id: string;
     name: string;
@@ -12,7 +13,7 @@ type ReportClassSelectProps = {
   }>;
 };
 
-export function ReportClassSelect({ classes }: ReportClassSelectProps) {
+export function ReportClassSelect({ allReportsHref, classes }: ReportClassSelectProps) {
   const router = useRouter();
 
   return (
@@ -24,6 +25,11 @@ export function ReportClassSelect({ classes }: ReportClassSelectProps) {
         id="report-class"
         onChange={(event) => {
           const classId = event.target.value;
+          if (classId === "all") {
+            router.push(allReportsHref);
+            return;
+          }
+
           if (classId) {
             router.push(`/classes/${classId}/reports`);
           }
@@ -32,6 +38,7 @@ export function ReportClassSelect({ classes }: ReportClassSelectProps) {
         <option disabled value="">
           Chọn lớp trong năm học này
         </option>
+        <option value="all">Tất cả các lớp trong năm học này</option>
         {classes.map((classItem) => (
           <option key={classItem.id} value={classItem.id}>
             {classItem.name} · {classItem.school_year} · Khối {classItem.grade}
