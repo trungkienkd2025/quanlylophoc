@@ -33,6 +33,36 @@ export async function getEntertainmentVideos(): Promise<EntertainmentVideo[]> {
   }
 }
 
+export async function getEntertainmentVideosForTeacherCode(teacherCode?: string | null): Promise<EntertainmentVideo[]> {
+  const cleanCode = teacherCode?.trim().toUpperCase();
+  if (!cleanCode) return [];
+
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase.rpc("get_entertainment_videos_for_teacher_code", {
+      p_teacher_code: cleanCode,
+    });
+
+    if (error || !data) return [];
+
+    return data.map((video: {
+      id: string;
+      title: string;
+      description: string;
+      youtube_url: string;
+      created_at: string;
+    }) => ({
+      id: video.id,
+      title: video.title,
+      description: video.description,
+      youtubeUrl: video.youtube_url,
+      createdAt: video.created_at,
+    }));
+  } catch {
+    return [];
+  }
+}
+
 export async function createEntertainmentVideo(input: {
   title: string;
   description: string;
