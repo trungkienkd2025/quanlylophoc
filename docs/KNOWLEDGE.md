@@ -81,8 +81,9 @@ Khi conflict giữa master prompt và code/docs trong repo: **ưu tiên code + f
 8. **Điểm danh theo ngày / phát biểu / điểm thi đua:** vẫn có (session cũ) để tương thích.
 9. **Báo cáo lớp:** lọc hôm nay / tuần / tháng / khoảng ngày.
 10. **Bảo mật:** proxy + layout; RLS; lỗi kỹ thuật không lộ ra UI.
-11. **Health:** `npm run lint`, `npm run typecheck`, `npm run build`.
-12. **Giải trí:** giáo viên thêm video YouTube bằng tên, mô tả và liên kết; học sinh đã nhập mã lớp của giáo viên có thể xem video tại mục Giải trí bên dưới Học liệu số ở cổng học sinh. Giáo viên vẫn chỉ quản lý video của chính mình.
+11. **Thời khóa biểu:** bảng nhập nhanh trên trang quản lý lớp; dữ liệu lưu trên thiết bị và tách riêng theo tài khoản giáo viên. Tài khoản chưa nhập sẽ thấy bảng trắng.
+12. **Health:** `npm run lint`, `npm run typecheck`, `npm run build`.
+13. **Giải trí:** giáo viên thêm video YouTube bằng tên, mô tả và liên kết; học sinh đã nhập mã lớp của giáo viên có thể xem video tại mục Giải trí bên dưới Học liệu số ở cổng học sinh. Giáo viên vẫn chỉ quản lý video của chính mình.
 
 ### Chưa có (backlog có chủ đích)
 

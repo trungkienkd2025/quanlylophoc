@@ -54,6 +54,9 @@ export const metadata: Metadata = {
 
 export default async function ClassManagementPage() {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   const { data: schoolYears, error: yearsError } = await supabase
     .from("school_years")
     .select("id, name")
@@ -147,7 +150,9 @@ export default async function ClassManagementPage() {
         <h1 className="text-2xl font-bold tracking-tight">Quản lý lớp học</h1>
       </header>
 
-      {currentYearName === "2026-2027" ? <ScheduleTable /> : null}
+      {currentYearName === "2026-2027" && user ? (
+        <ScheduleTable key={user.id} teacherId={user.id} />
+      ) : null}
 
       <section className="mb-5 grid gap-2 sm:grid-cols-3">
         <Card size="sm">
