@@ -20,6 +20,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { formatDateVi, genderLabel } from "@/lib/students/format";
+import {
+  sortStudents,
+  type StudentSortMode,
+} from "@/lib/students/sort";
 import { formatPointsTotal } from "@/lib/points/format";
 import type { StudentListItem } from "@/types/student";
 import type { StudentPointTotals } from "@/types/points";
@@ -40,53 +44,10 @@ type StudentManagementProps = {
 };
 
 type PanelMode = "none" | "create" | "edit" | "import";
-type SortMode = "name" | "code";
 type ScoreType = "semester" | "annual";
 type StudentScoreTotals = Record<string, number | null | undefined>;
 
 const SELECTED_SCORE_TYPE_STORAGE_KEY = "qllh:selected-score-type";
-
-function getVietnameseNameParts(fullName: string) {
-  return fullName.trim().split(/\s+/).filter(Boolean).reverse();
-}
-
-function compareStudentsByName(a: StudentListItem, b: StudentListItem) {
-  const aParts = getVietnameseNameParts(a.full_name);
-  const bParts = getVietnameseNameParts(b.full_name);
-  const maxLength = Math.max(aParts.length, bParts.length);
-
-  for (let index = 0; index < maxLength; index += 1) {
-    const result = (aParts[index] ?? "").localeCompare(
-      bParts[index] ?? "",
-      "vi",
-      {
-        sensitivity: "base",
-      },
-    );
-    if (result !== 0) return result;
-  }
-
-  return a.full_name.localeCompare(b.full_name, "vi", { sensitivity: "base" });
-}
-
-export function sortStudentsByNameAZ(students: StudentListItem[]) {
-  return [...students].sort(compareStudentsByName);
-}
-
-function compareStudents(
-  a: StudentListItem,
-  b: StudentListItem,
-  sortMode: SortMode,
-) {
-  if (sortMode === "name") return compareStudentsByName(a, b);
-
-  return (
-    a.student_code.localeCompare(b.student_code, "vi", {
-      numeric: true,
-      sensitivity: "base",
-    }) || compareStudentsByName(a, b)
-  );
-}
 
 function sanitizeFilenamePart(value: string) {
   return value
@@ -244,7 +205,7 @@ export function StudentManagement({
     : null;
 
   const [search, setSearch] = useState("");
-  const [sortMode, setSortMode] = useState<SortMode>("name");
+  const [sortMode, setSortMode] = useState<StudentSortMode>("name");
   const [panel, setPanel] = useState<PanelMode>(
     initialEditStudent ? "edit" : "none",
   );
@@ -268,9 +229,7 @@ export function StudentManagement({
         )
       : students;
 
-    return sortMode === "name"
-      ? sortStudentsByNameAZ(matches)
-      : [...matches].sort((a, b) => compareStudents(a, b, sortMode));
+    return sortStudents(matches, sortMode);
   }, [search, sortMode, students]);
 
   function openCreate() {
