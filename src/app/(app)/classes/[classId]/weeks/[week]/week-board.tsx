@@ -14,7 +14,7 @@ import {
   weeklyAttendanceStatusLabel,
 } from "@/lib/attendance/format";
 import { evaluationLevelOptions } from "@/lib/evaluations/levels";
-import { downloadWeekReportExcel } from "@/lib/weeks/export-excel";
+import { downloadWeekReportExcel, type WeekExportData } from "@/lib/weeks/export-excel";
 import { TOTAL_WEEKS } from "@/lib/weeks";
 import { cn } from "@/lib/utils";
 import type { AttendanceStatus } from "@/types/attendance";
@@ -70,6 +70,7 @@ export function WeekBoard({
   evaluations,
   startDate: initialStartDate = "",
   endDate: initialEndDate = "",
+  exportWeeks,
   onWeekChange,
 }: {
   classId: string;
@@ -81,6 +82,7 @@ export function WeekBoard({
   evaluations: EvaluationRow[];
   startDate?: string;
   endDate?: string;
+  exportWeeks: WeekExportData[];
   onWeekChange?: (week: number) => void;
 }) {
   const router = useRouter();
@@ -162,22 +164,30 @@ export function WeekBoard({
   }
 
   function handleExport() {
+    const weeks = exportWeeks.map((weekData) =>
+      weekData.week === week
+        ? {
+            ...weekData,
+            startDate,
+            endDate,
+            students: sortedStudents.map((student) => {
+              const state = byStudent[student.id] ?? emptyState();
+              return {
+                student_code: student.student_code,
+                full_name: student.full_name,
+                status: state.status,
+                level: state.level,
+                comment: state.comment,
+              };
+            }),
+          }
+        : weekData,
+    );
     downloadWeekReportExcel({
       className,
       schoolYear,
-      week,
-      startDate,
-      endDate,
-      students: sortedStudents.map((student) => {
-        const state = byStudent[student.id] ?? emptyState();
-        return {
-          student_code: student.student_code,
-          full_name: student.full_name,
-          status: state.status,
-          level: state.level,
-          comment: state.comment,
-        };
-      }),
+      throughWeek: week,
+      weeks,
     });
   }
 
