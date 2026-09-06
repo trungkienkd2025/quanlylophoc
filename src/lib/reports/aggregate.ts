@@ -1,7 +1,11 @@
 import { summarizeDay } from "@/lib/attendance/summary";
 import type { AttendanceStatus } from "@/types/attendance";
-import type { ClassReportData, DateRange, EvaluationSummary, StudentStatistics } from "@/types/reports";
-import type { ReportFilter } from "@/types/reports";
+import type {
+  ClassReportData,
+  EvaluationSummary,
+  StudentStatistics,
+  WeekRange,
+} from "@/types/reports";
 
 type StudentRow = { id: string; full_name: string };
 
@@ -11,13 +15,21 @@ type WeeklyEvaluationRow = {
   level: string | null;
 };
 
-function normalizeEvaluationLevel(level: string | null | undefined): keyof EvaluationSummary | null {
+function normalizeEvaluationLevel(
+  level: string | null | undefined,
+): keyof EvaluationSummary | null {
   const normalized = (level ?? "").trim().toLocaleLowerCase("vi");
 
   if (!normalized) return null;
-  if (normalized === "tốt" || normalized === "rat tot" || normalized === "rất tốt") return "good";
+  if (
+    normalized === "tốt" ||
+    normalized === "rat tot" ||
+    normalized === "rất tốt"
+  )
+    return "good";
   if (normalized === "khá" || normalized === "kha") return "fair";
-  if (normalized === "trung bình" || normalized === "trung binh") return "average";
+  if (normalized === "trung bình" || normalized === "trung binh")
+    return "average";
   if (normalized === "yếu" || normalized === "yeu") return "weak";
 
   return null;
@@ -48,23 +60,29 @@ function summarizeLatestEvaluations(
   return summary;
 }
 
-function countAbsentStudents(rows: { student_id: string; status: AttendanceStatus }[]): number {
-  return new Set(rows.filter((row) => row.status === "ABSENT").map((row) => row.student_id)).size;
+function countAbsentStudents(
+  rows: { student_id: string; status: AttendanceStatus }[],
+): number {
+  return new Set(
+    rows.filter((row) => row.status === "ABSENT").map((row) => row.student_id),
+  ).size;
 }
 
 export function buildClassReport(input: {
   classId?: string;
   className: string;
-  filter: ReportFilter;
-  range: DateRange;
+  range: WeekRange;
   students: StudentRow[];
-  attendanceRows: { student_id: string; date: string; status: AttendanceStatus }[];
+  attendanceRows: {
+    student_id: string;
+    week_number: number;
+    status: AttendanceStatus;
+  }[];
   weeklyEvaluationRows: WeeklyEvaluationRow[];
 }): ClassReportData {
   return {
     classId: input.classId,
     className: input.className,
-    filter: input.filter,
     range: input.range,
     activeStudents: input.students.length,
     absentStudents: countAbsentStudents(input.attendanceRows),
@@ -105,7 +123,11 @@ export function buildTodayDashboard(input: {
   participationToday: number;
   pointsThisWeek: number;
 }) {
-  const summary = summarizeDay(input.today, input.todayAttendance, input.activeStudents);
+  const summary = summarizeDay(
+    input.today,
+    input.todayAttendance,
+    input.activeStudents,
+  );
 
   return {
     activeStudents: input.activeStudents,

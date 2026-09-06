@@ -12,24 +12,43 @@ export function ClassReportView({ report }: ClassReportViewProps) {
     <>
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted-foreground">
-          Khoảng thời gian: {formatReportRangeLabel(report.range)}
+          Khoảng tuần: {formatReportRangeLabel(report.range)}
         </p>
         <ExportReportButton report={report} />
       </div>
 
       <Card>
         <CardContent className="grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-3">
-          <StatBlock label="Tổng số học sinh trong lớp" value={`${report.activeStudents}`} />
-          <StatBlock label="Số học sinh vắng" value={`${report.absentStudents}`} />
-          <StatBlock label="Số học sinh tốt" value={`${report.evaluations.good}`} />
-          <StatBlock label="Số học sinh khá" value={`${report.evaluations.fair}`} />
-          <StatBlock label="Số học sinh trung bình" value={`${report.evaluations.average}`} />
-          <StatBlock label="Số học sinh yếu" value={`${report.evaluations.weak}`} />
+          <StatBlock
+            label="Tổng số học sinh trong lớp"
+            value={`${report.activeStudents}`}
+          />
+          <StatBlock
+            label="Số học sinh vắng"
+            value={`${report.absentStudents}`}
+          />
+          <StatBlock
+            label="Số học sinh tốt"
+            value={`${report.evaluations.good}`}
+          />
+          <StatBlock
+            label="Số học sinh khá"
+            value={`${report.evaluations.fair}`}
+          />
+          <StatBlock
+            label="Số học sinh trung bình"
+            value={`${report.evaluations.average}`}
+          />
+          <StatBlock
+            label="Số học sinh yếu"
+            value={`${report.evaluations.weak}`}
+          />
         </CardContent>
       </Card>
 
       <p className="mt-4 text-sm text-muted-foreground">
-        Các nhóm Tốt / Khá / Trung bình / Yếu được tính theo đánh giá tuần mới nhất của từng học sinh.
+        Các nhóm Tốt / Khá / Trung bình / Yếu được tính theo đánh giá mới nhất
+        của từng học sinh trong khoảng tuần đã chọn.
       </p>
     </>
   );

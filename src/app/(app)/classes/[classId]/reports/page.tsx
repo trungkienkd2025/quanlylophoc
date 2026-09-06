@@ -1,9 +1,8 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { getLocalDateString } from "@/lib/dates";
 import { loadClassReport } from "@/lib/reports/load-report-data";
-import { parseReportFilter, resolveReportRange } from "@/lib/reports/range";
+import { resolveReportWeekRange } from "@/lib/reports/range";
 import { createClient } from "@/lib/supabase/server";
 import { ClassReportView } from "./class-report-view";
 import { ReportFilters } from "./report-filters";
@@ -13,16 +12,14 @@ export default async function ClassReportsPage({
   searchParams,
 }: {
   params: Promise<{ classId: string }>;
-  searchParams: Promise<{ filter?: string; from?: string; to?: string }>;
+  searchParams: Promise<{ fromWeek?: string; toWeek?: string }>;
 }) {
   const { classId } = await params;
-  const { filter: filterParam, from, to } = await searchParams;
-  const today = getLocalDateString();
-  const filter = parseReportFilter(filterParam);
+  const { fromWeek, toWeek } = await searchParams;
 
-  const range = resolveReportRange(filter, { today, from, to });
+  const range = resolveReportWeekRange(fromWeek, toWeek);
   if (!range) {
-    redirect(`/classes/${classId}/reports?filter=today`);
+    redirect(`/classes/${classId}/reports?fromWeek=1&toWeek=35`);
   }
 
   const supabase = await createClient();
@@ -36,7 +33,7 @@ export default async function ClassReportsPage({
 
   if (!classItem) notFound();
 
-  const report = await loadClassReport(supabase, classId, classItem.name, filter, range);
+  const report = await loadClassReport(supabase, classId, classItem.name, range);
   return (
     <>
       <Link
@@ -52,10 +49,12 @@ export default async function ClassReportsPage({
           Khối {classItem.grade} · Năm học {classItem.school_year}
         </p>
         <h1 className="mt-1 text-3xl font-bold">Báo cáo — {classItem.name}</h1>
-        <p className="mt-2 text-muted-foreground">Tổng hợp sĩ số, chuyên cần và đánh giá học sinh</p>
+        <p className="mt-2 text-muted-foreground">
+          Tổng hợp sĩ số, chuyên cần và đánh giá học sinh
+        </p>
       </header>
 
-      <ReportFilters classId={classId} filter={filter} range={range} />
+      <ReportFilters classId={classId} range={range} />
       <ClassReportView report={report} />
     </>
   );

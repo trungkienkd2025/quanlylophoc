@@ -17,25 +17,42 @@ export function MultiClassReportView({ report }: MultiClassReportViewProps) {
       average: sum.average + classReport.evaluations.average,
       weak: sum.weak + classReport.evaluations.weak,
     }),
-    { activeStudents: 0, absentStudents: 0, good: 0, fair: 0, average: 0, weak: 0 },
+    {
+      activeStudents: 0,
+      absentStudents: 0,
+      good: 0,
+      fair: 0,
+      average: 0,
+      weak: 0,
+    },
   );
 
   return (
     <>
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted-foreground">
-          Khoảng thời gian: {formatReportRangeLabel(report.range)} · {report.reports.length} lớp
+          Khoảng tuần: {formatReportRangeLabel(report.range)} ·{" "}
+          {report.reports.length} lớp
         </p>
         <ExportAllReportsButton report={report} />
       </div>
 
       <Card className="mb-4">
         <CardContent className="grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-3">
-          <StatBlock label="Tổng số học sinh" value={`${totals.activeStudents}`} />
-          <StatBlock label="Số học sinh vắng" value={`${totals.absentStudents}`} />
+          <StatBlock
+            label="Tổng số học sinh"
+            value={`${totals.activeStudents}`}
+          />
+          <StatBlock
+            label="Số học sinh vắng"
+            value={`${totals.absentStudents}`}
+          />
           <StatBlock label="Số học sinh tốt" value={`${totals.good}`} />
           <StatBlock label="Số học sinh khá" value={`${totals.fair}`} />
-          <StatBlock label="Số học sinh trung bình" value={`${totals.average}`} />
+          <StatBlock
+            label="Số học sinh trung bình"
+            value={`${totals.average}`}
+          />
           <StatBlock label="Số học sinh yếu" value={`${totals.weak}`} />
         </CardContent>
       </Card>
@@ -43,14 +60,18 @@ export function MultiClassReportView({ report }: MultiClassReportViewProps) {
       <div className="grid gap-4 lg:grid-cols-2">
         {report.reports.map((classReport) => (
           <ClassSummaryCard
-            key={classReport.classId ?? `${classReport.className}-${classReport.range.start}`}
+            key={
+              classReport.classId ??
+              `${classReport.className}-${classReport.range.fromWeek}`
+            }
             report={classReport}
           />
         ))}
       </div>
 
       <p className="mt-4 text-sm text-muted-foreground">
-        Khi xuất Excel, mỗi lớp sẽ nằm trong một sheet riêng và giữ cùng các thông tin đang hiển thị.
+        Khi xuất Excel, mỗi lớp sẽ nằm trong một sheet riêng và giữ cùng các
+        thông tin đang hiển thị.
       </p>
     </>
   );
@@ -62,11 +83,20 @@ function ClassSummaryCard({ report }: { report: ClassReportData }) {
       <CardContent>
         <h2 className="mb-3 text-lg font-bold">{report.className}</h2>
         <div className="grid gap-3 sm:grid-cols-2">
-          <StatBlock label="Tổng số học sinh" value={`${report.activeStudents}`} />
-          <StatBlock label="Số học sinh vắng" value={`${report.absentStudents}`} />
+          <StatBlock
+            label="Tổng số học sinh"
+            value={`${report.activeStudents}`}
+          />
+          <StatBlock
+            label="Số học sinh vắng"
+            value={`${report.absentStudents}`}
+          />
           <StatBlock label="Tốt" value={`${report.evaluations.good}`} />
           <StatBlock label="Khá" value={`${report.evaluations.fair}`} />
-          <StatBlock label="Trung bình" value={`${report.evaluations.average}`} />
+          <StatBlock
+            label="Trung bình"
+            value={`${report.evaluations.average}`}
+          />
           <StatBlock label="Yếu" value={`${report.evaluations.weak}`} />
         </div>
       </CardContent>
