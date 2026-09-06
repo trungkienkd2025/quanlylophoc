@@ -1,10 +1,19 @@
 import { getLocalDayBoundsIso, getWeekRangeLocal } from "@/lib/dates";
 import { aggregateParticipationCounts } from "@/lib/participation/summary";
 import { sumPointEvents } from "@/lib/points/format";
-import { buildClassReport, buildStudentStatistics, buildTodayDashboard } from "@/lib/reports/aggregate";
+import {
+  buildClassReport,
+  buildStudentStatistics,
+  buildTodayDashboard,
+} from "@/lib/reports/aggregate";
 import { getLocalRangeBoundsIso } from "@/lib/reports/range";
 import type { AttendanceStatus } from "@/types/attendance";
-import type { ClassDashboardStats, ClassReportData, DateRange, MultiClassReportData, ReportFilter } from "@/types/reports";
+import type {
+  ClassDashboardStats,
+  ClassReportData,
+  MultiClassReportData,
+  WeekRange,
+} from "@/types/reports";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 async function fetchActiveStudents(supabase: SupabaseClient, classId: string) {
@@ -42,7 +51,10 @@ export async function loadClassDashboardStats(
     .lte("created_at", todayEnd);
 
   const weekRange = getWeekRangeLocal(today);
-  const { start: weekStart, end: weekEnd } = getLocalRangeBoundsIso(weekRange.start, weekRange.end);
+  const { start: weekStart, end: weekEnd } = getLocalRangeBoundsIso(
+    weekRange.start,
+    weekRange.end,
+  );
   const { data: pointsWeekRows } = await supabase
     .from("student_points")
     .select("points")
@@ -50,7 +62,9 @@ export async function loadClassDashboardStats(
     .gte("created_at", weekStart)
     .lte("created_at", weekEnd);
 
-  const participationCounts = aggregateParticipationCounts(participationTodayRows ?? []);
+  const participationCounts = aggregateParticipationCounts(
+    participationTodayRows ?? [],
+  );
 
   return buildTodayDashboard({
     activeStudents,
@@ -58,7 +72,10 @@ export async function loadClassDashboardStats(
     todayAttendance: (todayAttendanceRows ?? []).map((row) => ({
       status: row.status as AttendanceStatus,
     })),
-    participationToday: Object.values(participationCounts).reduce((sum, count) => sum + count, 0),
+    participationToday: Object.values(participationCounts).reduce(
+      (sum, count) => sum + count,
+      0,
+    ),
     pointsThisWeek: sumPointEvents(pointsWeekRows ?? []),
   });
 }
@@ -67,33 +84,33 @@ export async function loadClassReport(
   supabase: SupabaseClient,
   classId: string,
   className: string,
-  filter: ReportFilter,
-  range: DateRange,
+  range: WeekRange,
 ): Promise<ClassReportData> {
   const students = await fetchActiveStudents(supabase, classId);
 
   const { data: attendanceRows } = await supabase
-    .from("attendance")
-    .select("student_id, date, status")
+    .from("weekly_attendance")
+    .select("student_id, week_number, status")
     .eq("class_id", classId)
-    .gte("date", range.start)
-    .lte("date", range.end);
+    .gte("week_number", range.fromWeek)
+    .lte("week_number", range.toWeek);
 
   const { data: weeklyEvaluationRows } = await supabase
     .from("weekly_evaluations")
     .select("student_id, week_number, level")
     .eq("class_id", classId)
+    .gte("week_number", range.fromWeek)
+    .lte("week_number", range.toWeek)
     .order("week_number", { ascending: false });
 
   return buildClassReport({
     classId,
     className,
-    filter,
     range,
     students,
     attendanceRows: (attendanceRows ?? []).map((row) => ({
       student_id: row.student_id,
-      date: String(row.date),
+      week_number: Number(row.week_number),
       status: row.status as AttendanceStatus,
     })),
     weeklyEvaluationRows: (weeklyEvaluationRows ?? []).map((row) => ({
@@ -108,18 +125,16 @@ export async function loadMultiClassReport(
   supabase: SupabaseClient,
   classes: Array<{ id: string; name: string }>,
   schoolYearName: string,
-  filter: ReportFilter,
-  range: DateRange,
+  range: WeekRange,
 ): Promise<MultiClassReportData> {
   const reports = await Promise.all(
     classes.map((classItem) =>
-      loadClassReport(supabase, classItem.id, classItem.name, filter, range),
+      loadClassReport(supabase, classItem.id, classItem.name, range),
     ),
   );
 
   return {
     schoolYearName,
-    filter,
     range,
     reports,
   };
@@ -153,7 +168,10 @@ export async function loadStudentStatistics(
     attendanceRows: (attendanceRows ?? []).map((row) => ({
       status: row.status as AttendanceStatus,
     })),
-    participationCount: (participationRows ?? []).reduce((total, event) => total + event.points, 0),
+    participationCount: (participationRows ?? []).reduce(
+      (total, event) => total + event.points,
+      0,
+    ),
     pointsTotal: sumPointEvents(pointRows ?? []),
   });
 }

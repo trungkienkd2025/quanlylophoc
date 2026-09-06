@@ -1,8 +1,6 @@
-export type ReportFilter = "today" | "week" | "month" | "custom";
-
-export type DateRange = {
-  start: string;
-  end: string;
+export type WeekRange = {
+  fromWeek: number;
+  toWeek: number;
 };
 
 export type ClassDashboardStats = {
@@ -25,8 +23,7 @@ export type EvaluationSummary = {
 export type ClassReportData = {
   classId?: string;
   className: string;
-  range: DateRange;
-  filter: ReportFilter;
+  range: WeekRange;
   activeStudents: number;
   absentStudents: number;
   evaluations: EvaluationSummary;
@@ -34,8 +31,7 @@ export type ClassReportData = {
 
 export type MultiClassReportData = {
   schoolYearName: string;
-  range: DateRange;
-  filter: ReportFilter;
+  range: WeekRange;
   reports: ClassReportData[];
 };
 

@@ -4,20 +4,33 @@ import type { ClassReportData, MultiClassReportData } from "@/types/reports";
 
 function reportRows(report: ClassReportData) {
   return [
-    { "Nội dung": "Tổng số học sinh trong lớp", "Số lượng": report.activeStudents },
+    {
+      "Nội dung": "Tổng số học sinh trong lớp",
+      "Số lượng": report.activeStudents,
+    },
     { "Nội dung": "Số học sinh vắng", "Số lượng": report.absentStudents },
     { "Nội dung": "Số học sinh tốt", "Số lượng": report.evaluations.good },
     { "Nội dung": "Số học sinh khá", "Số lượng": report.evaluations.fair },
-    { "Nội dung": "Số học sinh trung bình", "Số lượng": report.evaluations.average },
+    {
+      "Nội dung": "Số học sinh trung bình",
+      "Số lượng": report.evaluations.average,
+    },
     { "Nội dung": "Số học sinh yếu", "Số lượng": report.evaluations.weak },
   ];
 }
 
-function appendReportSheet(workbook: XLSX.WorkBook, report: ClassReportData, sheetName: string) {
+function appendReportSheet(
+  workbook: XLSX.WorkBook,
+  report: ClassReportData,
+  sheetName: string,
+) {
   const meta = [
     ["Lớp", report.className],
-    ["Khoảng thời gian", formatReportRangeLabel(report.range)],
-    ["Ghi chú", "Mức đánh giá lấy theo đánh giá tuần mới nhất của từng học sinh."],
+    ["Khoảng tuần", formatReportRangeLabel(report.range)],
+    [
+      "Ghi chú",
+      "Mức đánh giá lấy theo đánh giá mới nhất của từng học sinh trong khoảng tuần đã chọn.",
+    ],
     [],
   ];
 
@@ -27,7 +40,8 @@ function appendReportSheet(workbook: XLSX.WorkBook, report: ClassReportData, she
 }
 
 function safeSheetName(name: string, index: number) {
-  const normalized = name.replace(/[\\/?*\[\]:]/g, " ").trim() || `Lop ${index + 1}`;
+  const normalized =
+    name.replace(/[\\/?*\[\]:]/g, " ").trim() || `Lop ${index + 1}`;
   return normalized.slice(0, 31);
 }
 
@@ -47,10 +61,15 @@ function downloadWorkbook(workbook: XLSX.WorkBook, fileName: string) {
 export function downloadClassEvaluationReportExcel(report: ClassReportData) {
   const workbook = XLSX.utils.book_new();
   appendReportSheet(workbook, report, "Bao_cao_lop");
-  downloadWorkbook(workbook, `bao_cao_${report.className.replace(/\s+/g, "_")}.xlsx`);
+  downloadWorkbook(
+    workbook,
+    `bao_cao_${report.className.replace(/\s+/g, "_")}.xlsx`,
+  );
 }
 
-export function downloadMultiClassEvaluationReportExcel(report: MultiClassReportData) {
+export function downloadMultiClassEvaluationReportExcel(
+  report: MultiClassReportData,
+) {
   const workbook = XLSX.utils.book_new();
   const usedSheetNames = new Set<string>();
 

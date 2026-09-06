@@ -1,9 +1,8 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { getLocalDateString } from "@/lib/dates";
 import { loadMultiClassReport } from "@/lib/reports/load-report-data";
-import { parseReportFilter, resolveReportRange } from "@/lib/reports/range";
+import { resolveReportWeekRange } from "@/lib/reports/range";
 import { sortBySchoolYearNameDesc } from "@/lib/school-years";
 import { createClient } from "@/lib/supabase/server";
 import { ReportFilters } from "../../classes/[classId]/reports/report-filters";
@@ -17,16 +16,16 @@ type YearMenuItem = {
 export default async function AllReportsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ year?: string; filter?: string; from?: string; to?: string }>;
+  searchParams: Promise<{ year?: string; fromWeek?: string; toWeek?: string }>;
 }) {
-  const { year: selectedYearParam, filter: filterParam, from, to } = await searchParams;
-  const today = getLocalDateString();
-  const filter = parseReportFilter(filterParam);
-  const range = resolveReportRange(filter, { today, from, to });
+  const { year: selectedYearParam, fromWeek, toWeek } = await searchParams;
+  const range = resolveReportWeekRange(fromWeek, toWeek);
 
   if (!range) {
-    const yearQuery = selectedYearParam ? `&year=${encodeURIComponent(selectedYearParam)}` : "";
-    redirect(`/reports/all?filter=today${yearQuery}`);
+    const yearQuery = selectedYearParam
+      ? `&year=${encodeURIComponent(selectedYearParam)}`
+      : "";
+    redirect(`/reports/all?fromWeek=1&toWeek=35${yearQuery}`);
   }
 
   const supabase = await createClient();
@@ -58,22 +57,26 @@ export default async function AllReportsPage({
     ).values(),
   );
   const years = sortBySchoolYearNameDesc([...yearsFromDb, ...orphanYears]);
-  const selectedYear = years.find((year) => year.id === selectedYearParam) ?? years[0];
+  const selectedYear =
+    years.find((year) => year.id === selectedYearParam) ?? years[0];
 
   if (!selectedYear) notFound();
 
   const visibleClasses = (classes ?? []).filter(
     (classItem) =>
       classItem.school_year_id === selectedYear.id ||
-      (!classItem.school_year_id && classItem.school_year === selectedYear.name) ||
+      (!classItem.school_year_id &&
+        classItem.school_year === selectedYear.name) ||
       classItem.school_year === selectedYear.name,
   );
 
   const report = await loadMultiClassReport(
     supabase,
-    visibleClasses.map((classItem) => ({ id: classItem.id, name: classItem.name })),
+    visibleClasses.map((classItem) => ({
+      id: classItem.id,
+      name: classItem.name,
+    })),
     selectedYear.name,
-    filter,
     range,
   );
 
@@ -88,16 +91,18 @@ export default async function AllReportsPage({
       </Link>
 
       <header className="mb-7">
-        <p className="text-sm text-muted-foreground">Năm học {selectedYear.name}</p>
+        <p className="text-sm text-muted-foreground">
+          Năm học {selectedYear.name}
+        </p>
         <h1 className="mt-1 text-3xl font-bold">Báo cáo — Tất cả lớp</h1>
         <p className="mt-2 text-muted-foreground">
-          Tổng hợp sĩ số, chuyên cần và đánh giá của tất cả lớp bạn dạy trong năm học này.
+          Tổng hợp sĩ số, chuyên cần và đánh giá của tất cả lớp bạn dạy trong
+          năm học này.
         </p>
       </header>
 
       <ReportFilters
         basePath={`/reports/all?year=${encodeURIComponent(selectedYear.id)}`}
-        filter={filter}
         range={range}
       />
       <MultiClassReportView report={report} />
