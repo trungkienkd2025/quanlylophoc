@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { toWeeklyAttendanceStatus } from "@/lib/attendance/format";
 import { DEFAULT_EVALUATION_LEVELS } from "@/lib/evaluations/levels";
 import { TOTAL_WEEKS, weekLabel, weekNumbers } from "@/lib/weeks";
+import type { WeekExportData } from "@/lib/weeks/export-excel";
 import { cn } from "@/lib/utils";
 import type { AttendanceStatus } from "@/types/attendance";
 
@@ -122,6 +123,43 @@ export function ClassWeeksPanel({
     end_date: meta?.end_date ?? "",
   };
 
+  const exportWeeks = useMemo<WeekExportData[]>(() => {
+    return Array.from({ length: selectedWeek }, (_, index) => {
+      const week = index + 1;
+      const weekMeta = weekMetas.find((item) => item.week_number === week);
+      const dates = dateOverrides[week] ?? {
+        start_date: weekMeta?.start_date ?? "",
+        end_date: weekMeta?.end_date ?? "",
+      };
+      const attendanceByStudent = new Map(
+        attendance
+          .filter((row) => row.week_number === week)
+          .map((row) => [row.student_id, row.status]),
+      );
+      const evaluationByStudent = new Map(
+        evaluations
+          .filter((row) => row.week_number === week)
+          .map((row) => [row.student_id, row]),
+      );
+
+      return {
+        week,
+        startDate: dates.start_date,
+        endDate: dates.end_date,
+        students: students.map((student) => {
+          const evaluation = evaluationByStudent.get(student.id);
+          return {
+            student_code: student.student_code,
+            full_name: student.full_name,
+            status: toWeeklyAttendanceStatus(attendanceByStudent.get(student.id) ?? "PRESENT"),
+            level: evaluation?.level ?? "",
+            comment: evaluation?.comment ?? "",
+          };
+        }),
+      };
+    });
+  }, [attendance, dateOverrides, evaluations, selectedWeek, students, weekMetas]);
+
   function updateSelectedDate(field: "start_date" | "end_date", value: string) {
     setDateOverrides((current) => ({
       ...current,
@@ -231,6 +269,7 @@ export function ClassWeeksPanel({
           className={className}
           endDate={selectedDates.end_date}
           evaluations={weekEvaluations}
+          exportWeeks={exportWeeks}
           key={selectedWeek}
           onWeekChange={setSelectedWeek}
           schoolYear={schoolYear}

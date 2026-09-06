@@ -75,7 +75,7 @@ Khi conflict giữa master prompt và code/docs trong repo: **ưu tiên code + f
 2. **Lớp:** tạo lớp (tên, năm học, khối 1–12), soft delete, ownership theo giáo viên.
 3. **Học sinh:** CRUD, soft delete, unique `student_code` trong lớp (active), form tối giản.
 4. **Import Excel:** download mẫu → upload → preview/validate → confirm → RPC import atomic.
-5. **Điểm danh theo tuần (luồng chính):** 35 tuần / lớp; tap đổi trạng thái; lưu batch cùng đánh giá (`save_week_board`).
+5. **Điểm danh theo tuần (luồng chính):** 35 tuần / lớp; tap đổi trạng thái; lưu batch cùng đánh giá (`save_week_board`); xuất Excel cả lớp từ tuần 1 đến tuần đang chọn, mỗi tuần là một trang tính có đủ mã học sinh, họ tên, điểm danh, đánh giá và nhận xét.
 6. **Đánh giá tuần:** mức gợi ý (Tốt/Khá/…) + nhận xét tự nhập; không hard-code trong DB.
 7. **Điểm học tập:** học kỳ 1 / cuối năm — lý thuyết + thực hành; tổng generated trên DB.
 8. **Điểm danh theo ngày / phát biểu / điểm thi đua:** vẫn có (session cũ) để tương thích.
