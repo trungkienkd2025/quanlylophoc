@@ -2,41 +2,40 @@
 
 import { useEffect, useState } from "react";
 
-const DEFAULT_SCHEDULE_ROWS = [
-  ["", "5/1", "1/4", "2/1", "4/3"],
-  ["5/4 - LVT", "5/2", "", "2/4", "3/4"],
-  ["5/3 - LVT", "1/2", "5/5", "2/5", "4/4"],
-  ["5/2 - LVT", "1/1", "5/4", "4/5", ""],
-  ["5/3", "3/2", "3/5", "4/1", ""],
-  ["5/1", "3/3", "2/2", "4/2", ""],
-  ["", "3/1", "2/3", "5/6", ""],
-] as const;
+const SCHEDULE_ROW_COUNT = 7;
+const SCHEDULE_COLUMN_COUNT = 5;
 
 type ScheduleRows = string[][];
 
-const SCHEDULE_STORAGE_KEY = "qllh-class-management-schedule-v1";
+const SCHEDULE_STORAGE_KEY_PREFIX = "qllh-class-management-schedule-v2";
+
+function createEmptySchedule(): ScheduleRows {
+  return Array.from({ length: SCHEDULE_ROW_COUNT }, () =>
+    Array.from({ length: SCHEDULE_COLUMN_COUNT }, () => ""),
+  );
+}
 
 function isSavedSchedule(value: unknown): value is ScheduleRows {
   return (
     Array.isArray(value) &&
-    value.length === DEFAULT_SCHEDULE_ROWS.length &&
+    value.length === SCHEDULE_ROW_COUNT &&
     value.every(
-      (row, rowIndex) =>
+      (row) =>
         Array.isArray(row) &&
-        row.length === DEFAULT_SCHEDULE_ROWS[rowIndex].length &&
+        row.length === SCHEDULE_COLUMN_COUNT &&
         row.every((cell) => typeof cell === "string"),
     )
   );
 }
 
-export function ScheduleTable() {
-  const [scheduleRows, setScheduleRows] = useState<ScheduleRows>(() =>
-    DEFAULT_SCHEDULE_ROWS.map((row) => [...row]),
-  );
+export function ScheduleTable({ teacherId }: { teacherId: string }) {
+  const storageKey = `${SCHEDULE_STORAGE_KEY_PREFIX}:${teacherId}`;
+  const [scheduleRows, setScheduleRows] =
+    useState<ScheduleRows>(createEmptySchedule);
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    const savedSchedule = window.localStorage.getItem(SCHEDULE_STORAGE_KEY);
+    const savedSchedule = window.localStorage.getItem(storageKey);
 
     if (savedSchedule) {
       try {
@@ -45,21 +44,21 @@ export function ScheduleTable() {
           setScheduleRows(parsedSchedule);
         }
       } catch {
-        window.localStorage.removeItem(SCHEDULE_STORAGE_KEY);
+        window.localStorage.removeItem(storageKey);
       }
     }
 
     setIsLoaded(true);
-  }, []);
+  }, [storageKey]);
 
   useEffect(() => {
     if (isLoaded) {
       window.localStorage.setItem(
-        SCHEDULE_STORAGE_KEY,
+        storageKey,
         JSON.stringify(scheduleRows),
       );
     }
-  }, [isLoaded, scheduleRows]);
+  }, [isLoaded, scheduleRows, storageKey]);
 
   function updateCell(rowIndex: number, columnIndex: number, value: string) {
     setScheduleRows((currentRows) =>
@@ -80,7 +79,8 @@ export function ScheduleTable() {
     >
       <div className="max-w-full overflow-x-auto pb-1">
         <p className="mb-2 text-center text-sm text-muted-foreground">
-          Chạm vào từng ô để sửa. Nội dung được tự động lưu trên thiết bị này.
+          Chạm vào từng ô để sửa. Nội dung được tự động lưu riêng cho tài
+          khoản này trên thiết bị.
         </p>
         <table className="w-[652px] table-fixed border-collapse bg-white text-center text-base font-normal">
           <thead>
