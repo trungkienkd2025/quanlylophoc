@@ -31,6 +31,9 @@ export function StudentQuizClient({ initialQuestions, initialVideos = [], return
   const [videos, setVideos] = useState<LessonVideo[]>(initialVideos);
   const [showAllMaterials, setShowAllMaterials] = useState(false);
   const [entertainmentVideos, setEntertainmentVideos] = useState<EntertainmentVideo[]>([]);
+  const [showEntertainment, setShowEntertainment] = useState(false);
+  const [isLoadingEntertainment, setIsLoadingEntertainment] = useState(false);
+  const [entertainmentError, setEntertainmentError] = useState<string | null>(null);
 
   // Trạng thái chung
   const [studentName, setStudentName] = useState("");
@@ -134,27 +137,6 @@ export function StudentQuizClient({ initialQuestions, initialVideos = [], return
     };
   }, [selectedGrade, isQuizStarted, teacherId, showAllMaterials]);
 
-  useEffect(() => {
-    let active = true;
-
-    if (!teacherCode) {
-      setEntertainmentVideos([]);
-      return () => {
-        active = false;
-      };
-    }
-
-    getEntertainmentVideosForTeacherCode(teacherCode).then((loadedVideos) => {
-      if (active) setEntertainmentVideos(loadedVideos);
-    }).catch(() => {
-      if (active) setEntertainmentVideos([]);
-    });
-
-    return () => {
-      active = false;
-    };
-  }, [teacherCode]);
-
   function handleGradeChange(grade: number) {
     if (isQuizStarted && !isSubmitted) {
       if (!confirm("Em đang làm bài trắc nghiệm. Thay đổi khối lớp sẽ khởi động lại bài tập. Em có đồng ý không?")) {
@@ -180,18 +162,24 @@ export function StudentQuizClient({ initialQuestions, initialVideos = [], return
       return;
     }
 
+    setIsLoadingEntertainment(true);
+    setEntertainmentError(null);
     try {
       setEntertainmentVideos(await getEntertainmentVideosForTeacherCode(code));
     } catch {
       setEntertainmentVideos([]);
+      setEntertainmentError("Chưa thể tải video giải trí. Em vui lòng thử lại.");
+    } finally {
+      setIsLoadingEntertainment(false);
     }
   }
 
   async function handleShowEntertainment() {
-    await loadEntertainmentVideos();
+    setShowEntertainment(true);
     requestAnimationFrame(() => {
       document.getElementById("entertainment")?.scrollIntoView({ behavior: "smooth" });
     });
+    await loadEntertainmentVideos();
   }
 
   async function handleShowAllMaterials(targetId = "video-lessons") {
@@ -337,6 +325,8 @@ export function StudentQuizClient({ initialQuestions, initialVideos = [], return
       setInputCode("");
       setCodeError(null);
       setEntertainmentVideos([]);
+      setShowEntertainment(false);
+      setEntertainmentError(null);
       localStorage.removeItem("qllh.quiz.teacherId");
       localStorage.removeItem("qllh.quiz.teacherName");
       localStorage.removeItem("qllh.quiz.teacherCode");
@@ -582,6 +572,8 @@ export function StudentQuizClient({ initialQuestions, initialVideos = [], return
                         <Button
                           type="button"
                           onClick={handleShowEntertainment}
+                          aria-controls="entertainment"
+                          aria-expanded={showEntertainment}
                           variant="outline"
                           size="lg"
                           className="bg-white/10 hover:bg-white/20 text-white border-white/30 font-extrabold h-12 px-6 rounded-2xl backdrop-blur-sm"
@@ -737,18 +729,31 @@ export function StudentQuizClient({ initialQuestions, initialVideos = [], return
                     )}
                   </section>
 
-                  <section id="entertainment" className="space-y-4 scroll-mt-20">
-                    <h2 className="flex items-center gap-2 text-2xl font-extrabold text-slate-800">
-                      <Gamepad2 className="size-6 text-amber-500" />
-                      🎮 Giải trí: Cùng thư giãn nào!
-                    </h2>
-                    {entertainmentVideos.length === 0 ? (
-                      <Card className="rounded-3xl border-amber-100 bg-white p-8 text-center font-normal text-muted-foreground shadow-sm">
-                        Chưa có video giải trí nào cho lớp. Giáo viên có thể thêm video trong mục Giải trí.
-                      </Card>
-                    ) : (
-                      <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3">
-                        {entertainmentVideos.map((video) => (
+                  {showEntertainment && (
+                    <section id="entertainment" className="space-y-4 scroll-mt-20">
+                      <h2 className="flex items-center gap-2 text-2xl font-extrabold text-slate-800">
+                        <Gamepad2 className="size-6 text-amber-500" />
+                        🎮 Giải trí: Cùng thư giãn nào!
+                      </h2>
+                      {isLoadingEntertainment ? (
+                        <Card className="flex items-center justify-center gap-3 rounded-3xl border-amber-100 bg-white p-8 text-amber-700 shadow-sm">
+                          <RefreshCw className="size-5 animate-spin" />
+                          <span className="font-bold">Đang tải video giải trí...</span>
+                        </Card>
+                      ) : entertainmentError ? (
+                        <Card className="rounded-3xl border-rose-100 bg-white p-8 text-center shadow-sm">
+                          <p className="font-medium text-rose-700">{entertainmentError}</p>
+                          <Button type="button" variant="outline" className="mt-4 rounded-xl" onClick={() => loadEntertainmentVideos()}>
+                            Thử lại
+                          </Button>
+                        </Card>
+                      ) : entertainmentVideos.length === 0 ? (
+                        <Card className="rounded-3xl border-amber-100 bg-white p-8 text-center font-normal text-muted-foreground shadow-sm">
+                          Chưa có video giải trí nào cho lớp. Giáo viên có thể thêm video trong mục Giải trí.
+                        </Card>
+                      ) : (
+                        <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3">
+                          {entertainmentVideos.map((video) => (
                           <Card key={video.id} className="flex flex-col overflow-hidden rounded-3xl border-amber-100 bg-white shadow-sm transition-transform duration-200 hover:-translate-y-1">
                             <div className="aspect-video w-full overflow-hidden bg-slate-100">
                               <iframe
@@ -771,10 +776,11 @@ export function StudentQuizClient({ initialQuestions, initialVideos = [], return
                               </a>
                             </CardContent>
                           </Card>
-                        ))}
-                      </div>
-                    )}
-                  </section>
+                          ))}
+                        </div>
+                      )}
+                    </section>
+                  )}
                 </>
               )
             ) : (
