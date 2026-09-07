@@ -33,9 +33,13 @@ export async function getEntertainmentVideos(): Promise<EntertainmentVideo[]> {
   }
 }
 
-export async function getEntertainmentVideosForTeacherCode(teacherCode?: string | null): Promise<EntertainmentVideo[]> {
+export type EntertainmentVideosResult =
+  | { success: true; videos: EntertainmentVideo[] }
+  | { success: false; error: string };
+
+export async function getEntertainmentVideosForTeacherCode(teacherCode?: string | null): Promise<EntertainmentVideosResult> {
   const cleanCode = teacherCode?.trim().toUpperCase();
-  if (!cleanCode) return [];
+  if (!cleanCode) return { success: false, error: "Không tìm thấy mã lớp. Em vui lòng nhập lại mã lớp." };
 
   try {
     const supabase = await createClient();
@@ -43,9 +47,12 @@ export async function getEntertainmentVideosForTeacherCode(teacherCode?: string 
       p_teacher_code: cleanCode,
     });
 
-    if (error || !data) return [];
+    if (error) {
+      console.error("Unable to load entertainment videos", { code: error.code });
+      return { success: false, error: "Chưa thể tải video giải trí. Em vui lòng thử lại." };
+    }
 
-    return data.map((video: {
+    const videos = (data ?? []).map((video: {
       id: string;
       title: string;
       description: string;
@@ -58,8 +65,10 @@ export async function getEntertainmentVideosForTeacherCode(teacherCode?: string 
       youtubeUrl: video.youtube_url,
       createdAt: video.created_at,
     }));
+
+    return { success: true, videos };
   } catch {
-    return [];
+    return { success: false, error: "Chưa thể tải video giải trí. Em vui lòng thử lại." };
   }
 }
 
