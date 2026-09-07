@@ -770,6 +770,7 @@ as $$
   order by video.created_at desc;
 $$;
 
+revoke all on function public.get_entertainment_videos_for_teacher_code(text) from public;
 grant execute on function public.get_entertainment_videos_for_teacher_code(text) to anon, authenticated;
 
 -- Policies for quiz_submissions

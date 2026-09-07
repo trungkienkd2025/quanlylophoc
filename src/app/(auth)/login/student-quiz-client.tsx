@@ -165,7 +165,13 @@ export function StudentQuizClient({ initialQuestions, initialVideos = [], return
     setIsLoadingEntertainment(true);
     setEntertainmentError(null);
     try {
-      setEntertainmentVideos(await getEntertainmentVideosForTeacherCode(code));
+      const result = await getEntertainmentVideosForTeacherCode(code);
+      if (result.success) {
+        setEntertainmentVideos(result.videos);
+      } else {
+        setEntertainmentVideos([]);
+        setEntertainmentError(result.error);
+      }
     } catch {
       setEntertainmentVideos([]);
       setEntertainmentError("Chưa thể tải video giải trí. Em vui lòng thử lại.");

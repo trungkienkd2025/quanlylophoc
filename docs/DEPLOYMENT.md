@@ -28,7 +28,7 @@ Seed demo (tuỳ chọn, file riêng): `supabase/seed.demo.sql`.
 
 ### Cập nhật project đã có dữ liệu
 
-Không chạy lại `complete_setup.sql` vì file này sẽ xoá dữ liệu ứng dụng. Với tính năng video giải trí, mở **SQL Editor**, chạy toàn bộ file `supabase/patch_entertainment_videos.sql` một lần, rồi thử thêm lại liên kết YouTube. Patch này tạo bảng, cấp quyền cho người dùng đã đăng nhập và giữ RLS để mỗi giáo viên chỉ xem/sửa video của mình.
+Không chạy lại `complete_setup.sql` vì file này sẽ xoá dữ liệu ứng dụng. Với tính năng video giải trí, mở **SQL Editor** và chạy toàn bộ file `supabase/patch_entertainment_videos.sql` (có thể chạy lại an toàn), rồi thử thêm và mở lại video. Nếu bảng video đã tồn tại nhưng cổng học sinh vẫn báo chưa có video, chạy migration `supabase/migrations/20260907_repair_entertainment_video_student_access.sql` để cập nhật RPC đọc video. Các SQL này giữ RLS để mỗi giáo viên chỉ quản lý video của mình; học sinh chỉ nhận danh sách qua mã giáo viên đã nhập.
 
 ### 3. Cấu hình Authentication
 
