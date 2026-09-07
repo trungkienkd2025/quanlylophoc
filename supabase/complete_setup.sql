@@ -773,6 +773,11 @@ $$;
 revoke all on function public.get_entertainment_videos_for_teacher_code(text) from public;
 grant execute on function public.get_entertainment_videos_for_teacher_code(text) to anon, authenticated;
 
+-- Make the newly-created RPC visible to PostgREST immediately. Without this
+-- reload, an existing project can keep returning PGRST202 until its schema
+-- cache refreshes even though the function and grants are already correct.
+notify pgrst, 'reload schema';
+
 -- Policies for quiz_submissions
 create policy "Allow public insert quiz submissions"
   on public.quiz_submissions for insert

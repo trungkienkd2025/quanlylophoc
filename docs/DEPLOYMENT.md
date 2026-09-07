@@ -28,7 +28,7 @@ Seed demo (tuỳ chọn, file riêng): `supabase/seed.demo.sql`.
 
 ### Cập nhật project đã có dữ liệu
 
-Không chạy lại `complete_setup.sql` vì file này sẽ xoá dữ liệu ứng dụng. Với tính năng video giải trí, mở **SQL Editor** và chạy toàn bộ file `supabase/patch_entertainment_videos.sql` (có thể chạy lại an toàn), rồi thử thêm và mở lại video. Nếu bảng video đã tồn tại nhưng cổng học sinh vẫn báo chưa có video, chạy migration `supabase/migrations/20260907_repair_entertainment_video_student_access.sql` để cập nhật RPC đọc video. Các SQL này giữ RLS để mỗi giáo viên chỉ quản lý video của mình; học sinh chỉ nhận danh sách qua mã giáo viên đã nhập.
+Không chạy lại `complete_setup.sql` vì file này sẽ xoá dữ liệu ứng dụng. Với tính năng video giải trí, mở **SQL Editor** và chạy toàn bộ file `supabase/patch_entertainment_videos.sql` (có thể chạy lại an toàn), rồi thử thêm và mở lại video. Patch vừa cập nhật RPC vừa yêu cầu Supabase API làm mới schema cache, tránh lỗi `PGRST202` khi hàm đã được tạo nhưng API chưa nhận ra. Nếu đã chạy bản patch cũ, có thể chạy migration `supabase/migrations/20260907_z_reload_entertainment_video_rpc.sql`; nếu RPC chưa tồn tại, chạy `supabase/migrations/20260907_repair_entertainment_video_student_access.sql` trước. Các SQL này giữ RLS để mỗi giáo viên chỉ quản lý video của mình; học sinh chỉ nhận danh sách qua mã giáo viên đã nhập.
 
 ### 3. Cấu hình Authentication
 

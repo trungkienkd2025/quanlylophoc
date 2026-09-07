@@ -50,3 +50,7 @@ $$;
 
 revoke all on function public.get_entertainment_videos_for_teacher_code(text) from public;
 grant execute on function public.get_entertainment_videos_for_teacher_code(text) to anon, authenticated;
+
+-- Supabase's API can retain a schema cache created before this RPC existed.
+-- Reload it now so the student portal can call the function straight away.
+notify pgrst, 'reload schema';
