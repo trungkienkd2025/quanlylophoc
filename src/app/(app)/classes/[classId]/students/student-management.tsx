@@ -15,7 +15,10 @@ import {
   Trash2,
   UserPlus,
 } from "lucide-react";
-import { softDeleteStudent } from "@/app/actions/students";
+import {
+  softDeleteAllStudents,
+  softDeleteStudent,
+} from "@/app/actions/students";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -215,6 +218,7 @@ export function StudentManagement({
   const [deleteTarget, setDeleteTarget] = useState<StudentListItem | null>(
     null,
   );
+  const [deleteAllOpen, setDeleteAllOpen] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isDeleting, startDeleteTransition] = useTransition();
@@ -268,6 +272,23 @@ export function StudentManagement({
         setError(null);
       }
       setDeleteTarget(null);
+    });
+  }
+
+  function handleDeleteAll() {
+    startDeleteTransition(async () => {
+      const result = await softDeleteAllStudents(classId);
+      if (result.error) {
+        setError(result.error);
+      } else {
+        router.refresh();
+        setFeedback(
+          result.success ?? "Đã đưa toàn bộ học sinh ra khỏi lớp.",
+        );
+        setError(null);
+        closePanel();
+      }
+      setDeleteAllOpen(false);
     });
   }
 
@@ -340,6 +361,16 @@ export function StudentManagement({
           >
             <Download className="size-4" />
             Xuất Excel
+          </Button>
+          <Button
+            className="h-9"
+            disabled={students.length === 0}
+            onClick={() => setDeleteAllOpen(true)}
+            type="button"
+            variant="destructive"
+          >
+            <Trash2 className="size-4" />
+            Xóa tất cả
           </Button>
         </div>
       </div>
@@ -582,6 +613,50 @@ export function StudentManagement({
                 variant="outline"
               >
                 Huỷ
+              </Button>
+            </div>
+          </div>
+        </dialog>
+      )}
+
+      {deleteAllOpen && (
+        <dialog
+          aria-labelledby="delete-all-students-title"
+          aria-modal="true"
+          className="fixed inset-0 z-50 m-0 flex h-full max-h-none w-full max-w-none items-center justify-center bg-black/40 p-4 backdrop:bg-black/40"
+          open
+        >
+          <div className="w-full max-w-md rounded-2xl bg-card p-5 shadow-lg">
+            <h3 className="text-lg font-bold" id="delete-all-students-title">
+              Xóa tất cả học sinh khỏi lớp?
+            </h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Toàn bộ {students.length} học sinh sẽ bị đưa ra khỏi lớp{" "}
+              {className}. Dữ liệu của các em sẽ không còn hiển thị trong danh
+              sách và báo cáo.
+            </p>
+            <p className="mt-3 text-sm font-semibold text-destructive">
+              Hành động này không thể hoàn tác trên màn hình này.
+            </p>
+            <div className="mt-5 flex flex-col-reverse gap-3 sm:flex-row">
+              <Button
+                className="h-11"
+                disabled={isDeleting}
+                onClick={() => setDeleteAllOpen(false)}
+                type="button"
+                variant="outline"
+              >
+                Huỷ
+              </Button>
+              <Button
+                className="h-11"
+                disabled={isDeleting}
+                onClick={handleDeleteAll}
+                type="button"
+                variant="destructive"
+              >
+                <Trash2 className="size-4" />
+                {isDeleting ? "Đang xóa…" : `Xóa ${students.length} học sinh`}
               </Button>
             </div>
           </div>
