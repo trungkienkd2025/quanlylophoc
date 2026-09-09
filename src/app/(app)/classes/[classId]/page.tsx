@@ -64,7 +64,7 @@ export default async function ClassDetailPage({
     <>
       <Link
         className="mb-3 inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-primary"
-        href="/dashboard"
+        href="/class-management"
       >
         <ArrowLeft className="size-4" />
         Tất cả năm học / lớp
