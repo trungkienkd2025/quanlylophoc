@@ -173,6 +173,36 @@ export async function softDeleteStudent(
   return { success: "Đã đưa học sinh ra khỏi danh sách lớp." };
 }
 
+export async function softDeleteAllStudents(
+  classId: string,
+): Promise<ActionState> {
+  const access = await verifyClassAccess(classId);
+  if (!access.ok) return { error: access.error };
+
+  const { data: deletedStudents, error } = await access.supabase
+    .from("students")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("class_id", access.classId)
+    .is("deleted_at", null)
+    .select("id");
+
+  if (error) {
+    return {
+      error: "Chưa thể xóa danh sách học sinh. Vui lòng thử lại.",
+    };
+  }
+
+  revalidatePath(`/classes/${access.classId}/students`);
+  revalidatePath(`/classes/${access.classId}`);
+  revalidatePath("/dashboard");
+  revalidatePath("/class-management");
+
+  const deletedCount = deletedStudents?.length ?? 0;
+  return deletedCount > 0
+    ? { success: `Đã đưa ${deletedCount} học sinh ra khỏi lớp.` }
+    : { success: "Lớp hiện không có học sinh để xóa." };
+}
+
 const importRowSchema = z.object({
   student_code: z.string().trim().min(1).max(50),
   full_name: z.string().trim().min(1).max(120),
