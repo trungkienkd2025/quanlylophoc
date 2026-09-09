@@ -294,8 +294,8 @@ export function StudentManagement({
 
   return (
     <>
-      <div className="mb-3 flex flex-col gap-2 lg:flex-row lg:items-center">
-        <div className="relative flex-1">
+      <div className="mb-4 grid gap-3 2xl:grid-cols-[minmax(16rem,1fr)_auto] 2xl:items-center">
+        <div className="relative min-w-0">
           <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             aria-label="Tìm học sinh"
@@ -305,73 +305,79 @@ export function StudentManagement({
             value={search}
           />
         </div>
-        <div
-          aria-label="Sắp xếp danh sách học sinh"
-          className="grid grid-cols-2 gap-1.5"
-          role="group"
-        >
-          <Button
-            aria-pressed={sortMode === "name"}
-            className="h-9"
-            onClick={() => setSortMode("name")}
-            type="button"
-            variant={sortMode === "name" ? "secondary" : "outline"}
+        <div className="flex min-w-0 flex-col gap-2 md:flex-row md:flex-wrap md:items-center 2xl:flex-nowrap 2xl:justify-end">
+          <div
+            aria-label="Sắp xếp danh sách học sinh"
+            className="grid grid-cols-2 gap-2 md:flex md:flex-none"
+            role="group"
           >
-            <ArrowDownAZ className="size-4" />
-            Tên A–Z
-          </Button>
-          <Button
-            aria-pressed={sortMode === "code"}
-            className="h-9"
-            onClick={() => setSortMode("code")}
-            type="button"
-            variant={sortMode === "code" ? "secondary" : "outline"}
-          >
-            <Hash className="size-4" />
-            Mã học sinh
-          </Button>
-        </div>
-        <div className="flex flex-col gap-1.5 sm:flex-row">
-          <Button className="h-9" onClick={openCreate} type="button">
-            <UserPlus className="size-4" />
-            Thêm học sinh
-          </Button>
-          <Button
-            className="h-9"
-            onClick={openImport}
-            type="button"
-            variant="outline"
-          >
-            <FileSpreadsheet className="size-4" />
-            Import Excel
-          </Button>
-          <Button
-            className="h-9"
-            onClick={() =>
-              exportStudentsToExcel({
-                annualScoreTotals,
-                className,
-                schoolYear,
-                semesterScoreTotals,
-                students: filteredStudents,
-              })
-            }
-            type="button"
-            variant="outline"
-          >
-            <Download className="size-4" />
-            Xuất Excel
-          </Button>
-          <Button
-            className="h-9"
-            disabled={students.length === 0}
-            onClick={() => setDeleteAllOpen(true)}
-            type="button"
-            variant="destructive"
-          >
-            <Trash2 className="size-4" />
-            Xóa tất cả
-          </Button>
+            <Button
+              aria-pressed={sortMode === "name"}
+              className="h-9 whitespace-nowrap"
+              onClick={() => setSortMode("name")}
+              type="button"
+              variant={sortMode === "name" ? "secondary" : "outline"}
+            >
+              <ArrowDownAZ className="size-4" />
+              Tên A–Z
+            </Button>
+            <Button
+              aria-pressed={sortMode === "code"}
+              className="h-9 whitespace-nowrap"
+              onClick={() => setSortMode("code")}
+              type="button"
+              variant={sortMode === "code" ? "secondary" : "outline"}
+            >
+              <Hash className="size-4" />
+              Mã học sinh
+            </Button>
+          </div>
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap md:flex-1 2xl:flex-none 2xl:flex-nowrap">
+            <Button
+              className="h-9 whitespace-nowrap"
+              onClick={openCreate}
+              type="button"
+            >
+              <UserPlus className="size-4" />
+              Thêm học sinh
+            </Button>
+            <Button
+              className="h-9 whitespace-nowrap"
+              onClick={openImport}
+              type="button"
+              variant="outline"
+            >
+              <FileSpreadsheet className="size-4" />
+              Import Excel
+            </Button>
+            <Button
+              className="h-9 whitespace-nowrap"
+              onClick={() =>
+                exportStudentsToExcel({
+                  annualScoreTotals,
+                  className,
+                  schoolYear,
+                  semesterScoreTotals,
+                  students: filteredStudents,
+                })
+              }
+              type="button"
+              variant="outline"
+            >
+              <Download className="size-4" />
+              Xuất Excel
+            </Button>
+            <Button
+              className="h-9 whitespace-nowrap"
+              disabled={students.length === 0}
+              onClick={() => setDeleteAllOpen(true)}
+              type="button"
+              variant="destructive"
+            >
+              <Trash2 className="size-4" />
+              Xóa tất cả
+            </Button>
+          </div>
         </div>
       </div>
 
