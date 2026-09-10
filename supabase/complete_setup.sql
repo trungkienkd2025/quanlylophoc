@@ -27,6 +27,7 @@ drop table if exists public.attendance cascade;
 drop table if exists public.students cascade;
 drop table if exists public.classes cascade;
 drop table if exists public.school_years cascade;
+drop table if exists public.teacher_schedules cascade;
 drop table if exists public.profiles cascade;
 
 drop function if exists public.save_week_board(uuid, smallint, jsonb, jsonb);
@@ -72,6 +73,14 @@ create table public.school_years (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   deleted_at timestamptz
+);
+
+create table public.teacher_schedules (
+  teacher_id uuid primary key references public.profiles (id) on delete cascade,
+  schedule jsonb not null default '[["","","","",""],["","","","",""],["","","","",""],["","","","",""],["","","","",""],["","","","",""],["","","","",""]]'::jsonb
+    check (jsonb_typeof(schedule) = 'array'),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
 );
 
 create unique index school_years_teacher_name_active_idx
@@ -255,6 +264,8 @@ create trigger profiles_set_updated_at before update on public.profiles
   for each row execute function public.set_updated_at();
 create trigger school_years_set_updated_at before update on public.school_years
   for each row execute function public.set_updated_at();
+create trigger teacher_schedules_set_updated_at before update on public.teacher_schedules
+  for each row execute function public.set_updated_at();
 create trigger classes_set_updated_at before update on public.classes
   for each row execute function public.set_updated_at();
 create trigger students_set_updated_at before update on public.students
@@ -294,6 +305,7 @@ create trigger on_auth_user_created
 -- ---------------------------------------------------------------------------
 alter table public.profiles enable row level security;
 alter table public.school_years enable row level security;
+alter table public.teacher_schedules enable row level security;
 alter table public.classes enable row level security;
 alter table public.students enable row level security;
 alter table public.attendance enable row level security;
@@ -315,6 +327,12 @@ create policy "Teachers can insert their profile" on public.profiles
 create policy "Teachers manage own school years" on public.school_years for all
   using (teacher_id = auth.uid())
   with check (teacher_id = auth.uid());
+
+create policy "Teachers manage own schedule" on public.teacher_schedules for all
+  using (teacher_id = auth.uid())
+  with check (teacher_id = auth.uid());
+
+grant select, insert, update, delete on table public.teacher_schedules to authenticated;
 
 create policy "Teachers view their classes" on public.classes
   for select using (teacher_id = auth.uid());
