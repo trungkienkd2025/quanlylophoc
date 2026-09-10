@@ -13,6 +13,7 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { mapDatabaseError } from "@/lib/supabase/errors";
 import { ScheduleTable } from "./schedule-table";
+import { scheduleSchema } from "@/lib/schedules";
 
 type ClassRow = {
   id: string;
@@ -57,6 +58,14 @@ export default async function ClassManagementPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  const { data: savedSchedule } = user
+    ? await supabase
+        .from("teacher_schedules")
+        .select("schedule")
+        .eq("teacher_id", user.id)
+        .maybeSingle()
+    : { data: null };
+  const parsedSchedule = scheduleSchema.safeParse(savedSchedule?.schedule);
   const { data: schoolYears, error: yearsError } = await supabase
     .from("school_years")
     .select("id, name")
@@ -151,7 +160,11 @@ export default async function ClassManagementPage() {
       </header>
 
       {currentYearName === "2026-2027" && user ? (
-        <ScheduleTable key={user.id} teacherId={user.id} />
+        <ScheduleTable
+          initialSchedule={parsedSchedule.success ? parsedSchedule.data : null}
+          key={user.id}
+          teacherId={user.id}
+        />
       ) : null}
 
       <section className="mb-5 grid gap-2 sm:grid-cols-3">

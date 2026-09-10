@@ -1,43 +1,57 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
-const SCHEDULE_ROW_COUNT = 7;
-const SCHEDULE_COLUMN_COUNT = 5;
-
-type ScheduleRows = string[][];
+import { useCallback, useEffect, useRef, useState } from "react";
+import { saveSchedule } from "@/app/actions/schedule";
+import {
+  createEmptySchedule,
+  scheduleSchema,
+  type ScheduleRows,
+} from "@/lib/schedules";
 
 const SCHEDULE_STORAGE_KEY_PREFIX = "qllh-class-management-schedule-v2";
 
-function createEmptySchedule(): ScheduleRows {
-  return Array.from({ length: SCHEDULE_ROW_COUNT }, () =>
-    Array.from({ length: SCHEDULE_COLUMN_COUNT }, () => ""),
-  );
-}
-
 function isSavedSchedule(value: unknown): value is ScheduleRows {
-  return (
-    Array.isArray(value) &&
-    value.length === SCHEDULE_ROW_COUNT &&
-    value.every(
-      (row) =>
-        Array.isArray(row) &&
-        row.length === SCHEDULE_COLUMN_COUNT &&
-        row.every((cell) => typeof cell === "string"),
-    )
-  );
+  return scheduleSchema.safeParse(value).success;
 }
 
-export function ScheduleTable({ teacherId }: { teacherId: string }) {
+export function ScheduleTable({
+  initialSchedule,
+  teacherId,
+}: {
+  initialSchedule: ScheduleRows | null;
+  teacherId: string;
+}) {
   const storageKey = `${SCHEDULE_STORAGE_KEY_PREFIX}:${teacherId}`;
   const [scheduleRows, setScheduleRows] =
-    useState<ScheduleRows>(createEmptySchedule);
+    useState<ScheduleRows>(initialSchedule ?? createEmptySchedule);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [saveState, setSaveState] = useState<
+    "idle" | "saving" | "saved" | "error"
+  >(initialSchedule ? "saved" : "idle");
+  const [saveError, setSaveError] = useState("");
+  const skipFirstSave = useRef(true);
+  const saveTimer = useRef<number | null>(null);
+  const saveRequest = useRef(0);
+
+  const persistSchedule = useCallback(async (rows: ScheduleRows) => {
+    const request = ++saveRequest.current;
+    setSaveState("saving");
+    setSaveError("");
+    const result = await saveSchedule(rows);
+
+    if (request !== saveRequest.current) return;
+    if (result.success) {
+      setSaveState("saved");
+    } else {
+      setSaveState("error");
+      setSaveError(result.error);
+    }
+  }, []);
 
   useEffect(() => {
     const savedSchedule = window.localStorage.getItem(storageKey);
 
-    if (savedSchedule) {
+    if (!initialSchedule && savedSchedule) {
       try {
         const parsedSchedule: unknown = JSON.parse(savedSchedule);
         if (isSavedSchedule(parsedSchedule)) {
@@ -49,16 +63,34 @@ export function ScheduleTable({ teacherId }: { teacherId: string }) {
     }
 
     setIsLoaded(true);
-  }, [storageKey]);
+  }, [initialSchedule, storageKey]);
 
   useEffect(() => {
-    if (isLoaded) {
-      window.localStorage.setItem(
-        storageKey,
-        JSON.stringify(scheduleRows),
-      );
+    if (!isLoaded) return;
+
+    window.localStorage.setItem(storageKey, JSON.stringify(scheduleRows));
+    if (skipFirstSave.current && initialSchedule) {
+      skipFirstSave.current = false;
+      return;
     }
-  }, [isLoaded, scheduleRows, storageKey]);
+
+    skipFirstSave.current = false;
+    saveTimer.current = window.setTimeout(() => {
+      void persistSchedule(scheduleRows);
+    }, 700);
+
+    return () => {
+      if (saveTimer.current !== null) window.clearTimeout(saveTimer.current);
+    };
+  }, [initialSchedule, isLoaded, persistSchedule, scheduleRows, storageKey]);
+
+  function saveNow() {
+    if (saveTimer.current !== null) {
+      window.clearTimeout(saveTimer.current);
+      saveTimer.current = null;
+    }
+    void persistSchedule(scheduleRows);
+  }
 
   function updateCell(rowIndex: number, columnIndex: number, value: string) {
     setScheduleRows((currentRows) =>
@@ -78,10 +110,26 @@ export function ScheduleTable({ teacherId }: { teacherId: string }) {
       className="mb-5 flex justify-center"
     >
       <div className="max-w-full overflow-x-auto pb-1">
-        <p className="mb-2 text-center text-sm text-muted-foreground">
-          Chạm vào từng ô để sửa. Nội dung được tự động lưu riêng cho tài
-          khoản này trên thiết bị.
-        </p>
+        <div
+          aria-live="polite"
+          className="mb-2 text-center text-sm text-muted-foreground"
+        >
+          <p>
+            Chạm vào từng ô để sửa. Nội dung được tự động lưu vào tài khoản
+            này.
+          </p>
+          <p
+            className={saveState === "error" ? "mt-1 text-destructive" : "mt-1"}
+          >
+            {saveState === "saving"
+              ? "Đang lưu…"
+              : saveState === "saved"
+                ? "Đã lưu — bạn có thể xem trên thiết bị khác."
+                : saveState === "error"
+                  ? saveError
+                  : "Nội dung sẽ được lưu sau khi bạn nhập."}
+          </p>
+        </div>
         <table className="w-[652px] table-fixed border-collapse bg-white text-center text-base font-normal">
           <thead>
             <tr>
@@ -140,6 +188,8 @@ export function ScheduleTable({ teacherId }: { teacherId: string }) {
                       onChange={(event) =>
                         updateCell(rowIndex, columnIndex, event.target.value)
                       }
+                      maxLength={200}
+                      onBlur={saveNow}
                       rows={1}
                       spellCheck={false}
                       value={period}
