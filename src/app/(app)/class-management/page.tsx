@@ -124,13 +124,13 @@ export default async function ClassManagementPage() {
     {},
   );
 
-  const loadError =
-    yearsError || classesError
-      ? mapDatabaseError(
-          yearsError ?? classesError,
-          "Chưa thể tải danh sách. Vui lòng thử lại sau.",
-        )
-      : null;
+  const databaseError = yearsError ?? classesError;
+  const loadError = databaseError
+    ? mapDatabaseError(
+        databaseError,
+        "Chưa thể tải danh sách. Vui lòng thử lại sau.",
+      )
+    : null;
 
   const currentYearName = currentSchoolYearName();
   const currentYear = years.find((year) => year.name === currentYearName);
