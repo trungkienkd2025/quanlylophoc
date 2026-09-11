@@ -77,22 +77,21 @@ export default async function ClassManagementPage() {
     .is("deleted_at", null)
     .order("name");
 
-  const classIds = classes?.map((item) => item.id) ?? [];
-  const { data: activeStudents } =
-    classIds.length > 0
-      ? await supabase
-          .from("students")
-          .select("class_id")
-          .is("deleted_at", null)
-          .in("class_id", classIds)
-      : { data: [] as { class_id: string }[] };
+  const studentCountResults = await Promise.all(
+    (classes ?? []).map(async (classItem) => {
+      const { count, error } = await supabase
+        .from("students")
+        .select("id", { count: "exact", head: true })
+        .eq("class_id", classItem.id)
+        .is("deleted_at", null);
 
-  const studentCountByClass = (activeStudents ?? []).reduce<
-    Record<string, number>
-  >((counts, student) => {
-    counts[student.class_id] = (counts[student.class_id] ?? 0) + 1;
-    return counts;
-  }, {});
+      return { classId: classItem.id, count: count ?? 0, error };
+    }),
+  );
+  const studentCountByClass = Object.fromEntries(
+    studentCountResults.map(({ classId, count }) => [classId, count]),
+  );
+  const studentsError = studentCountResults.find(({ error }) => error)?.error;
 
   const persistedYearIds = new Set((schoolYears ?? []).map((year) => year.id));
   const yearsFromDb = (schoolYears ?? []).map((year) => ({
@@ -125,9 +124,9 @@ export default async function ClassManagementPage() {
   );
 
   const loadError =
-    yearsError || classesError
+    yearsError || classesError || studentsError
       ? mapDatabaseError(
-          yearsError ?? classesError,
+          yearsError ?? classesError ?? studentsError,
           "Chưa thể tải danh sách. Vui lòng thử lại sau.",
         )
       : null;
