@@ -71,6 +71,7 @@ export function WeekBoard({
   startDate: initialStartDate = "",
   endDate: initialEndDate = "",
   exportWeeks,
+  initialStudentId,
   onWeekChange,
 }: {
   classId: string;
@@ -83,6 +84,7 @@ export function WeekBoard({
   startDate?: string;
   endDate?: string;
   exportWeeks: WeekExportData[];
+  initialStudentId?: string;
   onWeekChange?: (week: number) => void;
 }) {
   const router = useRouter();
@@ -99,7 +101,11 @@ export function WeekBoard({
   const [byStudent, setByStudent] = useState(() =>
     buildStateMap(students, attendance, evaluations),
   );
-  const [selectedId, setSelectedId] = useState(() => sortedStudents[0]?.id ?? "");
+  const [selectedId, setSelectedId] = useState(() =>
+    sortedStudents.find((student) => student.id === initialStudentId)?.id ??
+      sortedStudents[0]?.id ??
+      "",
+  );
   const [query, setQuery] = useState("");
   const [pickerOpen, setPickerOpen] = useState(false);
   const startDate = initialStartDate;

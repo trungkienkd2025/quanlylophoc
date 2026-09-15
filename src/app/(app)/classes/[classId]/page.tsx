@@ -15,10 +15,10 @@ export default async function ClassDetailPage({
   searchParams,
 }: {
   params: Promise<{ classId: string }>;
-  searchParams: Promise<{ week?: string }>;
+  searchParams: Promise<{ student?: string; week?: string }>;
 }) {
   const { classId } = await params;
-  const { week: weekQuery } = await searchParams;
+  const { student: studentQuery, week: weekQuery } = await searchParams;
   const supabase = await createClient();
 
   const { data: classItem } = await supabase
@@ -43,6 +43,12 @@ export default async function ClassDetailPage({
     .eq("class_id", classId)
     .is("deleted_at", null)
     .order("full_name");
+  const activeStudents = students ?? [];
+  const initialStudentId = activeStudents.some(
+    (student) => student.id === studentQuery,
+  )
+    ? studentQuery
+    : undefined;
 
   const [{ data: allAttendance }, { data: allEvaluations }, weekMetasResult] = await Promise.all([
     supabase
@@ -89,9 +95,10 @@ export default async function ClassDetailPage({
         classId={classId}
         className={classItem.name}
         evaluations={allEvaluations ?? []}
+        initialStudentId={initialStudentId}
         initialWeek={initialWeek}
         schoolYear={classItem.school_year}
-        students={students ?? []}
+        students={activeStudents}
         weekMetas={(weekMetas ?? []).map((row) => ({
           week_number: row.week_number,
           start_date: row.start_date,

@@ -39,6 +39,7 @@ export function ClassWeeksPanel({
   attendance,
   evaluations,
   weekMetas,
+  initialStudentId,
   initialWeek,
 }: {
   classId: string;
@@ -48,6 +49,7 @@ export function ClassWeeksPanel({
   attendance: AttendanceRow[];
   evaluations: EvaluationRow[];
   weekMetas: WeekMeta[];
+  initialStudentId?: string;
   initialWeek: number;
 }) {
   const [selectedWeek, setSelectedWeek] = useState<number>(initialWeek);
@@ -270,6 +272,7 @@ export function ClassWeeksPanel({
           endDate={selectedDates.end_date}
           evaluations={weekEvaluations}
           exportWeeks={exportWeeks}
+          initialStudentId={initialStudentId}
           key={selectedWeek}
           onWeekChange={setSelectedWeek}
           schoolYear={schoolYear}
