@@ -86,7 +86,7 @@ export async function saveAttendance(
 export async function saveStudentAttendanceToday(
   classId: string,
   studentId: string,
-  status: Extract<AttendanceStatus, "PRESENT" | "ABSENT">,
+  status: Extract<AttendanceStatus, "PRESENT" | "ABSENT"> | null,
 ): Promise<AttendanceActionState> {
   const access = await verifyClassAccess(classId);
   if (!access.ok) return { error: access.error };
@@ -94,11 +94,29 @@ export async function saveStudentAttendanceToday(
   const parsed = z
     .object({
       studentId: z.string().uuid(),
-      status: z.enum(["PRESENT", "ABSENT"]),
+      status: z.enum(["PRESENT", "ABSENT"]).nullable(),
     })
     .safeParse({ studentId, status });
   if (!parsed.success) {
     return { error: "Thông tin điểm danh không hợp lệ." };
+  }
+
+  if (parsed.data.status === null) {
+    const { error } = await access.supabase
+      .from("attendance")
+      .delete()
+      .eq("class_id", access.classId)
+      .eq("student_id", parsed.data.studentId)
+      .eq("date", getLocalDateString());
+
+    if (error) {
+      return { error: "Chưa thể bỏ lựa chọn. Vui lòng thử lại." };
+    }
+
+    revalidatePath(`/classes/${access.classId}/students`);
+    revalidatePath(`/classes/${access.classId}/session`);
+    revalidatePath(`/classes/${access.classId}/attendance`);
+    return { success: "Đã bỏ lựa chọn." };
   }
 
   const { error } = await access.supabase.rpc("save_attendance", {

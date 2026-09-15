@@ -324,10 +324,15 @@ export function StudentManagement({
 
   function handleAttendance(
     student: StudentListItem,
-    status: "PRESENT" | "ABSENT",
+    status: "PRESENT" | "ABSENT" | null,
   ) {
     const previousStatus = attendance[student.id];
-    setAttendance((current) => ({ ...current, [student.id]: status }));
+    setAttendance((current) => {
+      const next = { ...current };
+      if (status) next[student.id] = status;
+      else delete next[student.id];
+      return next;
+    });
     setAttendanceMenuId(null);
     setSavingAttendanceId(student.id);
     setError(null);
@@ -348,7 +353,9 @@ export function StudentManagement({
         setError(result.error);
       } else {
         setFeedback(
-          `${student.full_name}: ${status === "PRESENT" ? "Tổ trưởng" : "Lớp trưởng"}.`,
+          status === null
+            ? `${student.full_name}: đã bỏ lựa chọn.`
+            : `${student.full_name}: ${status === "PRESENT" ? "Tổ trưởng" : "Lớp trưởng"}.`,
         );
         router.refresh();
       }
@@ -621,6 +628,15 @@ export function StudentManagement({
                               role="menu"
                             >
                               <button
+                                aria-label="Bỏ lựa chọn"
+                                className="w-full rounded-sm px-3 py-2 text-left text-sm hover:bg-accent"
+                                onClick={() => handleAttendance(student, null)}
+                                role="menuitem"
+                                type="button"
+                              >
+                                {"\u00a0"}
+                              </button>
+                              <button
                                 className="w-full rounded-sm px-3 py-2 text-left text-sm hover:bg-accent"
                                 onClick={() =>
                                   handleAttendance(student, "ABSENT")
@@ -735,6 +751,15 @@ export function StudentManagement({
                         className="absolute right-0 z-20 mt-1 w-full min-w-32 rounded-md border bg-popover p-1 text-popover-foreground shadow-md"
                         role="menu"
                       >
+                        <button
+                          aria-label="Bỏ lựa chọn"
+                          className="w-full rounded-sm px-3 py-2 text-left text-sm hover:bg-accent"
+                          onClick={() => handleAttendance(student, null)}
+                          role="menuitem"
+                          type="button"
+                        >
+                          {"\u00a0"}
+                        </button>
                         <button
                           className="w-full rounded-sm px-3 py-2 text-left text-sm hover:bg-accent"
                           onClick={() => handleAttendance(student, "ABSENT")}
