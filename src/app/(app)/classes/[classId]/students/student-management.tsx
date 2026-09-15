@@ -541,7 +541,12 @@ export function StudentManagement({
                 {filteredStudents.map((student) => (
                   <tr className="border-t" key={student.id}>
                     <td className="px-3 py-2 font-medium">
-                      {student.full_name}
+                      <Link
+                        className="hover:text-primary hover:underline"
+                        href={`/classes/${classId}?student=${student.id}`}
+                      >
+                        {student.full_name}
+                      </Link>
                     </td>
                     <td className="px-3 py-2">{student.student_code}</td>
                     <td className="px-3 py-2">
@@ -650,9 +655,12 @@ export function StudentManagement({
               <div className="px-3 py-2" key={student.id}>
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold">
+                    <Link
+                      className="block truncate text-sm font-semibold hover:text-primary hover:underline"
+                      href={`/classes/${classId}?student=${student.id}`}
+                    >
                       {student.full_name}
-                    </p>
+                    </Link>
                     <p className="text-xs text-muted-foreground">
                       {student.student_code} ·{" "}
                       {formatDateVi(student.date_of_birth)} ·{" "}
