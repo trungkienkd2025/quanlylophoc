@@ -3,8 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { verifyClassAccess } from "@/lib/classes/access";
-import { isFutureDateString, isIsoDateString } from "@/lib/dates";
-import type { AttendanceRecord } from "@/types/attendance";
+import {
+  getLocalDateString,
+  isFutureDateString,
+  isIsoDateString,
+} from "@/lib/dates";
+import type { AttendanceRecord, AttendanceStatus } from "@/types/attendance";
 
 export type AttendanceActionState = {
   error?: string;
@@ -77,4 +81,44 @@ export async function saveAttendance(
   revalidatePath(`/classes/${access.classId}/session`);
   revalidatePath(`/classes/${access.classId}/attendance`);
   return { success: "Đã lưu điểm danh." };
+}
+
+export async function saveStudentAttendanceToday(
+  classId: string,
+  studentId: string,
+  status: Extract<AttendanceStatus, "PRESENT" | "ABSENT">,
+): Promise<AttendanceActionState> {
+  const access = await verifyClassAccess(classId);
+  if (!access.ok) return { error: access.error };
+
+  const parsed = z
+    .object({
+      studentId: z.string().uuid(),
+      status: z.enum(["PRESENT", "ABSENT"]),
+    })
+    .safeParse({ studentId, status });
+  if (!parsed.success) {
+    return { error: "Thông tin điểm danh không hợp lệ." };
+  }
+
+  const { error } = await access.supabase.rpc("save_attendance", {
+    p_class_id: access.classId,
+    p_date: getLocalDateString(),
+    p_entries: [
+      {
+        student_id: parsed.data.studentId,
+        status: parsed.data.status,
+        note: "",
+      },
+    ],
+  });
+
+  if (error) {
+    return { error: "Chưa thể lưu điểm danh. Vui lòng thử lại." };
+  }
+
+  revalidatePath(`/classes/${access.classId}/students`);
+  revalidatePath(`/classes/${access.classId}/session`);
+  revalidatePath(`/classes/${access.classId}/attendance`);
+  return { success: "Đã lưu điểm danh hôm nay." };
 }
