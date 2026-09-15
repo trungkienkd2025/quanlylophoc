@@ -591,6 +591,7 @@ export function StudentManagement({
                         </Button>
                         <div className="relative">
                           <Button
+                            aria-label={`Điểm danh ${student.full_name}`}
                             aria-expanded={attendanceMenuId === student.id}
                             aria-haspopup="menu"
                             className="min-w-28"
@@ -610,7 +611,7 @@ export function StudentManagement({
                                 ? "Tổ trưởng"
                                 : attendance[student.id] === "ABSENT"
                                   ? "Lớp trưởng"
-                                  : "Điểm danh"}
+                                  : "\u00a0"}
                             <ChevronDown className="size-4" />
                           </Button>
                           {attendanceMenuId === student.id && (
@@ -705,6 +706,7 @@ export function StudentManagement({
                   </Button>
                   <div className="relative">
                     <Button
+                      aria-label={`Điểm danh ${student.full_name}`}
                       aria-expanded={attendanceMenuId === student.id}
                       aria-haspopup="menu"
                       className="h-8 w-full"
@@ -724,7 +726,7 @@ export function StudentManagement({
                           ? "Tổ trưởng"
                           : attendance[student.id] === "ABSENT"
                             ? "Lớp trưởng"
-                            : "Điểm danh"}
+                            : "\u00a0"}
                       <ChevronDown className="size-3.5" />
                     </Button>
                     {attendanceMenuId === student.id && (
