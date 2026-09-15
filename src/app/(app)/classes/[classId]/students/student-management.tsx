@@ -6,6 +6,7 @@ import { saveAs } from "file-saver";
 import { useMemo, useState, useTransition } from "react";
 import {
   ArrowDownAZ,
+  ChevronDown,
   Eye,
   Download,
   FileSpreadsheet,
@@ -15,6 +16,7 @@ import {
   Trash2,
   UserPlus,
 } from "lucide-react";
+import { saveStudentAttendanceToday } from "@/app/actions/attendance";
 import {
   softDeleteAllStudents,
   softDeleteStudent,
@@ -30,6 +32,7 @@ import {
 import { formatPointsTotal } from "@/lib/points/format";
 import type { StudentListItem } from "@/types/student";
 import type { StudentPointTotals } from "@/types/points";
+import type { AttendanceStatus } from "@/types/attendance";
 import { StudentFormPanel } from "./student-form-panel";
 import { StudentImportPanel } from "./student-import-panel";
 import { StudentPointsControls } from "./student-points-controls";
@@ -43,6 +46,8 @@ type StudentManagementProps = {
   schoolYear: string;
   semesterScoreTotals: StudentScoreTotals;
   annualScoreTotals: StudentScoreTotals;
+  attendanceDate: string;
+  initialAttendance: Record<string, AttendanceStatus>;
   students: StudentListItem[];
 };
 
@@ -92,6 +97,8 @@ function saveExcelFile(workbook: XLSX.WorkBook, fileName: string) {
 
 export function exportStudentsToExcel(input: {
   annualScoreTotals: StudentScoreTotals;
+  attendance: Record<string, AttendanceStatus>;
+  attendanceDate: string;
   className: string;
   schoolYear: string;
   semesterScoreTotals: StudentScoreTotals;
@@ -119,7 +126,15 @@ export function exportStudentsToExcel(input: {
       ) / 10
     : null;
   const data = [
-    ["STT", "Mã học sinh", "Họ và tên", "Ngày sinh", "Giới tính", "Điểm"],
+    [
+      "STT",
+      "Mã học sinh",
+      "Họ và tên",
+      "Ngày sinh",
+      "Giới tính",
+      "Điểm",
+      `Điểm danh (${formatDateVi(input.attendanceDate)})`,
+    ],
     ...input.students.map((student, index) => [
       index + 1,
       student.student_code,
@@ -132,11 +147,17 @@ export function exportStudentsToExcel(input: {
         input.semesterScoreTotals,
         input.annualScoreTotals,
       ) ?? "",
+      input.attendance[student.id] === "PRESENT"
+        ? "Có mặt"
+        : input.attendance[student.id] === "ABSENT"
+          ? "Vắng"
+          : "",
     ]),
     [],
-    [`Sĩ số: ${input.students.length} học sinh`, "", "", "", "", ""],
+    [`Sĩ số: ${input.students.length} học sinh`, "", "", "", "", "", ""],
     [
       `Điểm trung bình lớp: ${averageScore == null ? "" : averageScore.toFixed(1)}`,
+      "",
       "",
       "",
       "",
@@ -146,7 +167,7 @@ export function exportStudentsToExcel(input: {
   ];
   const workbook = XLSX.utils.book_new();
   const sheet = XLSX.utils.aoa_to_sheet(data);
-  const range = XLSX.utils.decode_range(sheet["!ref"] ?? "A1:F1");
+  const range = XLSX.utils.decode_range(sheet["!ref"] ?? "A1:G1");
 
   for (let row = range.s.r; row <= range.e.r; row += 1) {
     for (let col = range.s.c; col <= range.e.c; col += 1) {
@@ -161,7 +182,7 @@ export function exportStudentsToExcel(input: {
             : undefined,
         alignment: {
           horizontal:
-            row === 0 || [0, 1, 3, 4, 5].includes(col) ? "center" : "left",
+            row === 0 || [0, 1, 3, 4, 5, 6].includes(col) ? "center" : "left",
           vertical: "center",
         },
         border:
@@ -184,6 +205,7 @@ export function exportStudentsToExcel(input: {
     { wch: 18 },
     { wch: 15 },
     { wch: 12 },
+    { wch: 22 },
   ];
   XLSX.utils.book_append_sheet(workbook, sheet, "Danh sách học sinh");
   saveExcelFile(
@@ -200,6 +222,8 @@ export function StudentManagement({
   schoolYear,
   semesterScoreTotals,
   annualScoreTotals,
+  attendanceDate,
+  initialAttendance,
   students,
 }: StudentManagementProps) {
   const router = useRouter();
@@ -221,7 +245,13 @@ export function StudentManagement({
   const [deleteAllOpen, setDeleteAllOpen] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [attendance, setAttendance] = useState(initialAttendance);
+  const [attendanceMenuId, setAttendanceMenuId] = useState<string | null>(null);
+  const [savingAttendanceId, setSavingAttendanceId] = useState<string | null>(
+    null,
+  );
   const [isDeleting, startDeleteTransition] = useTransition();
+  const [, startAttendanceTransition] = useTransition();
 
   const filteredStudents = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -292,6 +322,40 @@ export function StudentManagement({
     });
   }
 
+  function handleAttendance(
+    student: StudentListItem,
+    status: "PRESENT" | "ABSENT",
+  ) {
+    const previousStatus = attendance[student.id];
+    setAttendance((current) => ({ ...current, [student.id]: status }));
+    setAttendanceMenuId(null);
+    setSavingAttendanceId(student.id);
+    setError(null);
+
+    startAttendanceTransition(async () => {
+      const result = await saveStudentAttendanceToday(
+        classId,
+        student.id,
+        status,
+      );
+      if (result.error) {
+        setAttendance((current) => {
+          const next = { ...current };
+          if (previousStatus) next[student.id] = previousStatus;
+          else delete next[student.id];
+          return next;
+        });
+        setError(result.error);
+      } else {
+        setFeedback(
+          `${student.full_name}: ${status === "PRESENT" ? "Có mặt" : "Vắng"}.`,
+        );
+        router.refresh();
+      }
+      setSavingAttendanceId(null);
+    });
+  }
+
   return (
     <>
       <div className="mb-4 grid gap-3 2xl:grid-cols-[minmax(16rem,1fr)_auto] 2xl:items-center">
@@ -355,6 +419,8 @@ export function StudentManagement({
               onClick={() =>
                 exportStudentsToExcel({
                   annualScoreTotals,
+                  attendance,
+                  attendanceDate,
                   className,
                   schoolYear,
                   semesterScoreTotals,
@@ -518,6 +584,59 @@ export function StudentManagement({
                           <Trash2 className="size-4" />
                           Xóa
                         </Button>
+                        <div className="relative">
+                          <Button
+                            aria-expanded={attendanceMenuId === student.id}
+                            aria-haspopup="menu"
+                            className="min-w-28"
+                            disabled={savingAttendanceId === student.id}
+                            onClick={() =>
+                              setAttendanceMenuId((current) =>
+                                current === student.id ? null : student.id,
+                              )
+                            }
+                            size="sm"
+                            type="button"
+                            variant="outline"
+                          >
+                            {savingAttendanceId === student.id
+                              ? "Đang lưu…"
+                              : attendance[student.id] === "PRESENT"
+                                ? "Có mặt"
+                                : attendance[student.id] === "ABSENT"
+                                  ? "Vắng"
+                                  : "Điểm danh"}
+                            <ChevronDown className="size-4" />
+                          </Button>
+                          {attendanceMenuId === student.id && (
+                            <div
+                              aria-label={`Điểm danh ${student.full_name}`}
+                              className="absolute right-0 z-20 mt-1 w-32 rounded-md border bg-popover p-1 text-popover-foreground shadow-md"
+                              role="menu"
+                            >
+                              <button
+                                className="w-full rounded-sm px-3 py-2 text-left text-sm hover:bg-accent"
+                                onClick={() =>
+                                  handleAttendance(student, "ABSENT")
+                                }
+                                role="menuitem"
+                                type="button"
+                              >
+                                Vắng
+                              </button>
+                              <button
+                                className="w-full rounded-sm px-3 py-2 text-left text-sm hover:bg-accent"
+                                onClick={() =>
+                                  handleAttendance(student, "PRESENT")
+                                }
+                                role="menuitem"
+                                type="button"
+                              >
+                                Có mặt
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </td>
                   </tr>
@@ -541,7 +660,7 @@ export function StudentManagement({
                     </p>
                   </div>
                 </div>
-                <div className="mt-2 grid grid-cols-3 gap-1.5">
+                <div className="mt-2 grid grid-cols-2 gap-1.5">
                   <Button
                     className="h-8"
                     nativeButton={false}
@@ -576,6 +695,55 @@ export function StudentManagement({
                     <Trash2 className="size-3.5" />
                     Xóa
                   </Button>
+                  <div className="relative">
+                    <Button
+                      aria-expanded={attendanceMenuId === student.id}
+                      aria-haspopup="menu"
+                      className="h-8 w-full"
+                      disabled={savingAttendanceId === student.id}
+                      onClick={() =>
+                        setAttendanceMenuId((current) =>
+                          current === student.id ? null : student.id,
+                        )
+                      }
+                      size="sm"
+                      type="button"
+                      variant="outline"
+                    >
+                      {savingAttendanceId === student.id
+                        ? "Đang lưu…"
+                        : attendance[student.id] === "PRESENT"
+                          ? "Có mặt"
+                          : attendance[student.id] === "ABSENT"
+                            ? "Vắng"
+                            : "Điểm danh"}
+                      <ChevronDown className="size-3.5" />
+                    </Button>
+                    {attendanceMenuId === student.id && (
+                      <div
+                        aria-label={`Điểm danh ${student.full_name}`}
+                        className="absolute right-0 z-20 mt-1 w-full min-w-32 rounded-md border bg-popover p-1 text-popover-foreground shadow-md"
+                        role="menu"
+                      >
+                        <button
+                          className="w-full rounded-sm px-3 py-2 text-left text-sm hover:bg-accent"
+                          onClick={() => handleAttendance(student, "ABSENT")}
+                          role="menuitem"
+                          type="button"
+                        >
+                          Vắng
+                        </button>
+                        <button
+                          className="w-full rounded-sm px-3 py-2 text-left text-sm hover:bg-accent"
+                          onClick={() => handleAttendance(student, "PRESENT")}
+                          role="menuitem"
+                          type="button"
+                        >
+                          Có mặt
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <StudentPointsControls
                   classId={classId}

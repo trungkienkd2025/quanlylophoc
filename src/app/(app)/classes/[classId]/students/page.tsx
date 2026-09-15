@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { aggregateStudentPointTotals } from "@/lib/points/format";
 import { calculateLearningScoreTotal } from "@/lib/scores/calculate";
+import { getLocalDateString } from "@/lib/dates";
 import { createClient } from "@/lib/supabase/server";
 import { StudentManagement } from "./student-management";
 
@@ -17,6 +18,7 @@ export default async function ClassStudentsPage({
   const { classId } = await params;
   const { edit: initialEditId } = await searchParams;
   const supabase = await createClient();
+  const attendanceDate = getLocalDateString();
 
   const { data: classItem } = await supabase
     .from("classes")
@@ -41,6 +43,7 @@ export default async function ClassStudentsPage({
     { data: pointEvents },
     { data: semesterScores },
     { data: annualScores },
+    { data: attendanceRows },
   ] = await Promise.all([
     supabase
       .from("student_points")
@@ -54,6 +57,11 @@ export default async function ClassStudentsPage({
       .from("annual_scores")
       .select("student_id, theory_score, practice_score")
       .eq("class_id", classId),
+    supabase
+      .from("attendance")
+      .select("student_id, status")
+      .eq("class_id", classId)
+      .eq("date", attendanceDate),
   ]);
 
   const pointTotals = aggregateStudentPointTotals(pointEvents ?? []);
@@ -108,6 +116,10 @@ export default async function ClassStudentsPage({
             schoolYear={classItem.school_year}
             semesterScoreTotals={semesterScoreTotals}
             annualScoreTotals={annualScoreTotals}
+            attendanceDate={attendanceDate}
+            initialAttendance={Object.fromEntries(
+              (attendanceRows ?? []).map((row) => [row.student_id, row.status]),
+            )}
             students={students ?? []}
           />
         </Suspense>
