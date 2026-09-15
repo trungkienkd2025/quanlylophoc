@@ -348,7 +348,7 @@ export function StudentManagement({
         setError(result.error);
       } else {
         setFeedback(
-          `${student.full_name}: ${status === "PRESENT" ? "Có mặt" : "Vắng"}.`,
+          `${student.full_name}: ${status === "PRESENT" ? "Tổ trưởng" : "Lớp trưởng"}.`,
         );
         router.refresh();
       }
@@ -607,9 +607,9 @@ export function StudentManagement({
                             {savingAttendanceId === student.id
                               ? "Đang lưu…"
                               : attendance[student.id] === "PRESENT"
-                                ? "Có mặt"
+                                ? "Tổ trưởng"
                                 : attendance[student.id] === "ABSENT"
-                                  ? "Vắng"
+                                  ? "Lớp trưởng"
                                   : "Điểm danh"}
                             <ChevronDown className="size-4" />
                           </Button>
@@ -627,7 +627,7 @@ export function StudentManagement({
                                 role="menuitem"
                                 type="button"
                               >
-                                Vắng
+                                Lớp trưởng
                               </button>
                               <button
                                 className="w-full rounded-sm px-3 py-2 text-left text-sm hover:bg-accent"
@@ -637,7 +637,7 @@ export function StudentManagement({
                                 role="menuitem"
                                 type="button"
                               >
-                                Có mặt
+                                Tổ trưởng
                               </button>
                             </div>
                           )}
@@ -721,9 +721,9 @@ export function StudentManagement({
                       {savingAttendanceId === student.id
                         ? "Đang lưu…"
                         : attendance[student.id] === "PRESENT"
-                          ? "Có mặt"
+                          ? "Tổ trưởng"
                           : attendance[student.id] === "ABSENT"
-                            ? "Vắng"
+                            ? "Lớp trưởng"
                             : "Điểm danh"}
                       <ChevronDown className="size-3.5" />
                     </Button>
@@ -739,7 +739,7 @@ export function StudentManagement({
                           role="menuitem"
                           type="button"
                         >
-                          Vắng
+                          Lớp trưởng
                         </button>
                         <button
                           className="w-full rounded-sm px-3 py-2 text-left text-sm hover:bg-accent"
@@ -747,7 +747,7 @@ export function StudentManagement({
                           role="menuitem"
                           type="button"
                         >
-                          Có mặt
+                          Tổ trưởng
                         </button>
                       </div>
                     )}
