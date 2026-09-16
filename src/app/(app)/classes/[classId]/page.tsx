@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { estimateCurrentWeek, TOTAL_WEEKS } from "@/lib/weeks";
+import { selectWeekForDate, TOTAL_WEEKS } from "@/lib/weeks";
 import type { AttendanceStatus } from "@/types/attendance";
 import { ClassWeeksPanel } from "./class-weeks-panel";
 
@@ -30,12 +30,9 @@ export default async function ClassDetailPage({
 
   if (!classItem) notFound();
 
-  const estimatedWeek = estimateCurrentWeek(classItem.school_year);
   const parsedWeek = Number.parseInt(weekQuery ?? "", 10);
-  const initialWeek =
-    Number.isFinite(parsedWeek) && parsedWeek >= 1 && parsedWeek <= TOTAL_WEEKS
-      ? parsedWeek
-      : estimatedWeek;
+  const hasRequestedWeek =
+    Number.isFinite(parsedWeek) && parsedWeek >= 1 && parsedWeek <= TOTAL_WEEKS;
 
   const { data: students } = await supabase
     .from("students")
@@ -65,6 +62,9 @@ export default async function ClassDetailPage({
       .eq("class_id", classId),
   ]);
   const weekMetas = weekMetasResult.error ? [] : (weekMetasResult.data ?? []);
+  const initialWeek = hasRequestedWeek
+    ? parsedWeek
+    : selectWeekForDate(classItem.school_year, weekMetas);
 
   return (
     <>
@@ -97,6 +97,7 @@ export default async function ClassDetailPage({
         evaluations={allEvaluations ?? []}
         initialStudentId={initialStudentId}
         initialWeek={initialWeek}
+        autoSelectCurrentWeek={!hasRequestedWeek}
         schoolYear={classItem.school_year}
         students={activeStudents}
         weekMetas={(weekMetas ?? []).map((row) => ({
