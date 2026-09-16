@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { loadMultiClassReport } from "@/lib/reports/load-report-data";
+import {
+  loadMultiClassLearningScoreReports,
+  loadMultiClassReport,
+} from "@/lib/reports/load-report-data";
 import { resolveReportWeekRange } from "@/lib/reports/range";
 import { sortBySchoolYearNameDesc } from "@/lib/school-years";
 import { createClient } from "@/lib/supabase/server";
@@ -70,15 +73,25 @@ export default async function AllReportsPage({
       classItem.school_year === selectedYear.name,
   );
 
-  const report = await loadMultiClassReport(
-    supabase,
-    visibleClasses.map((classItem) => ({
-      id: classItem.id,
-      name: classItem.name,
-    })),
-    selectedYear.name,
-    range,
-  );
+  const reportClasses = visibleClasses.map((classItem) => ({
+    id: classItem.id,
+    name: classItem.name,
+  }));
+  const [report, semesterScoreReports, annualScoreReports] = await Promise.all([
+    loadMultiClassReport(supabase, reportClasses, selectedYear.name, range),
+    loadMultiClassLearningScoreReports(
+      supabase,
+      reportClasses,
+      selectedYear.name,
+      "semester",
+    ),
+    loadMultiClassLearningScoreReports(
+      supabase,
+      reportClasses,
+      selectedYear.name,
+      "annual",
+    ),
+  ]);
 
   return (
     <>
@@ -105,7 +118,11 @@ export default async function AllReportsPage({
         basePath={`/reports/all?year=${encodeURIComponent(selectedYear.id)}`}
         range={range}
       />
-      <MultiClassReportView report={report} />
+      <MultiClassReportView
+        annualScoreReports={annualScoreReports}
+        report={report}
+        semesterScoreReports={semesterScoreReports}
+      />
     </>
   );
 }

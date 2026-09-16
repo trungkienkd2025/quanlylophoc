@@ -35,6 +35,22 @@ export type MultiClassReportData = {
   reports: ClassReportData[];
 };
 
+export type LearningScoreType = "semester" | "annual";
+
+export type LearningScoreEntry = {
+  studentCode: string;
+  fullName: string;
+  theoryScore: number | null;
+  practiceScore: number | null;
+  totalScore: number;
+};
+
+export type ClassLearningScoreReport = {
+  className: string;
+  schoolYearName: string;
+  entries: LearningScoreEntry[];
+};
+
 export type StudentStatistics = {
   attendanceRate: number | null;
   participationCount: number;
