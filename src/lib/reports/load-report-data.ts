@@ -9,6 +9,7 @@ import {
 import { getLocalRangeBoundsIso } from "@/lib/reports/range";
 import type { AttendanceStatus } from "@/types/attendance";
 import type {
+  ClassLearningScoreReport,
   ClassDashboardStats,
   ClassReportData,
   MultiClassReportData,
@@ -138,6 +139,66 @@ export async function loadMultiClassReport(
     range,
     reports,
   };
+}
+
+/** Loads active students and their saved HK1 or year-end learning scores for Excel. */
+export async function loadClassLearningScoreReport(
+  supabase: SupabaseClient,
+  classId: string,
+  className: string,
+  schoolYearName: string,
+  type: "semester" | "annual",
+): Promise<ClassLearningScoreReport> {
+  const [studentsResult, scoresResult] = await Promise.all([
+    supabase
+      .from("students")
+      .select("id, student_code, full_name")
+      .eq("class_id", classId)
+      .is("deleted_at", null)
+      .order("full_name"),
+    supabase
+      .from(type === "semester" ? "semester_scores" : "annual_scores")
+      .select("student_id, theory_score, practice_score, total_score")
+      .eq("class_id", classId),
+  ]);
+
+  const scoresByStudentId = new Map(
+    (scoresResult.data ?? []).map((score) => [score.student_id, score]),
+  );
+
+  return {
+    className,
+    schoolYearName,
+    entries: (studentsResult.data ?? []).map((student) => {
+      const score = scoresByStudentId.get(student.id);
+      return {
+        studentCode: student.student_code,
+        fullName: student.full_name,
+        theoryScore: score?.theory_score ?? null,
+        practiceScore: score?.practice_score ?? null,
+        totalScore: score?.total_score ?? 0,
+      };
+    }),
+  };
+}
+
+export async function loadMultiClassLearningScoreReports(
+  supabase: SupabaseClient,
+  classes: Array<{ id: string; name: string }>,
+  schoolYearName: string,
+  type: "semester" | "annual",
+) {
+  return Promise.all(
+    classes.map((classItem) =>
+      loadClassLearningScoreReport(
+        supabase,
+        classItem.id,
+        classItem.name,
+        schoolYearName,
+        type,
+      ),
+    ),
+  );
 }
 
 export async function loadStudentStatistics(

@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { loadClassReport } from "@/lib/reports/load-report-data";
+import {
+  loadClassLearningScoreReport,
+  loadClassReport,
+} from "@/lib/reports/load-report-data";
 import { resolveReportWeekRange } from "@/lib/reports/range";
 import { createClient } from "@/lib/supabase/server";
 import { ClassReportView } from "./class-report-view";
@@ -33,7 +36,23 @@ export default async function ClassReportsPage({
 
   if (!classItem) notFound();
 
-  const report = await loadClassReport(supabase, classId, classItem.name, range);
+  const [report, semesterScoreReport, annualScoreReport] = await Promise.all([
+    loadClassReport(supabase, classId, classItem.name, range),
+    loadClassLearningScoreReport(
+      supabase,
+      classId,
+      classItem.name,
+      classItem.school_year,
+      "semester",
+    ),
+    loadClassLearningScoreReport(
+      supabase,
+      classId,
+      classItem.name,
+      classItem.school_year,
+      "annual",
+    ),
+  ]);
   return (
     <>
       <Link
@@ -55,7 +74,11 @@ export default async function ClassReportsPage({
       </header>
 
       <ReportFilters classId={classId} range={range} />
-      <ClassReportView report={report} />
+      <ClassReportView
+        annualScoreReport={annualScoreReport}
+        report={report}
+        semesterScoreReport={semesterScoreReport}
+      />
     </>
   );
 }

@@ -1,20 +1,33 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { formatReportRangeLabel } from "@/lib/reports/range";
-import type { ClassReportData } from "@/types/reports";
+import type { ClassLearningScoreReport, ClassReportData } from "@/types/reports";
 import { ExportReportButton } from "./export-report-button";
+import { ScoreExportMenu } from "../../../reports/score-export-menu";
 
 type ClassReportViewProps = {
   report: ClassReportData;
+  semesterScoreReport: ClassLearningScoreReport;
+  annualScoreReport: ClassLearningScoreReport;
 };
 
-export function ClassReportView({ report }: ClassReportViewProps) {
+export function ClassReportView({
+  report,
+  semesterScoreReport,
+  annualScoreReport,
+}: ClassReportViewProps) {
   return (
     <>
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted-foreground">
           Khoảng tuần: {formatReportRangeLabel(report.range)}
         </p>
-        <ExportReportButton report={report} />
+        <div className="flex flex-wrap gap-2">
+          <ScoreExportMenu
+            annualReports={[annualScoreReport]}
+            semesterReports={[semesterScoreReport]}
+          />
+          <ExportReportButton report={report} />
+        </div>
       </div>
 
       <Card>

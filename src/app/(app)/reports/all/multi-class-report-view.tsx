@@ -1,13 +1,24 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { formatReportRangeLabel } from "@/lib/reports/range";
-import type { ClassReportData, MultiClassReportData } from "@/types/reports";
+import type {
+  ClassLearningScoreReport,
+  ClassReportData,
+  MultiClassReportData,
+} from "@/types/reports";
 import { ExportAllReportsButton } from "./export-all-reports-button";
+import { ScoreExportMenu } from "../score-export-menu";
 
 type MultiClassReportViewProps = {
   report: MultiClassReportData;
+  semesterScoreReports: ClassLearningScoreReport[];
+  annualScoreReports: ClassLearningScoreReport[];
 };
 
-export function MultiClassReportView({ report }: MultiClassReportViewProps) {
+export function MultiClassReportView({
+  report,
+  semesterScoreReports,
+  annualScoreReports,
+}: MultiClassReportViewProps) {
   const totals = report.reports.reduce(
     (sum, classReport) => ({
       activeStudents: sum.activeStudents + classReport.activeStudents,
@@ -34,7 +45,13 @@ export function MultiClassReportView({ report }: MultiClassReportViewProps) {
           Khoảng tuần: {formatReportRangeLabel(report.range)} ·{" "}
           {report.reports.length} lớp
         </p>
-        <ExportAllReportsButton report={report} />
+        <div className="flex flex-wrap gap-2">
+          <ScoreExportMenu
+            annualReports={annualScoreReports}
+            semesterReports={semesterScoreReports}
+          />
+          <ExportAllReportsButton report={report} />
+        </div>
       </div>
 
       <Card className="mb-4">

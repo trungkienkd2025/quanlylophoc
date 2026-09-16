@@ -77,9 +77,9 @@ Khi conflict giữa master prompt và code/docs trong repo: **ưu tiên code + f
 4. **Import Excel:** download mẫu → upload → preview/validate → confirm → RPC import atomic.
 5. **Điểm danh theo tuần (luồng chính):** 35 tuần / lớp; tap đổi trạng thái; lưu batch cùng đánh giá (`save_week_board`); xuất Excel cả lớp từ tuần 1 đến tuần đang chọn, mỗi tuần là một trang tính có đủ mã học sinh, họ tên, điểm danh, đánh giá và nhận xét.
 6. **Đánh giá tuần:** mức gợi ý (Tốt/Khá/…) + nhận xét tự nhập; không hard-code trong DB.
-7. **Điểm học tập:** học kỳ 1 / cuối năm — lý thuyết + thực hành; tổng generated trên DB.
+7. **Điểm học tập:** học kỳ 1 / cuối năm — lý thuyết + thực hành; tổng generated trên DB. Từ báo cáo có thể xuất Excel điểm theo học kỳ 1 hoặc cả năm; báo cáo tất cả lớp tạo một sheet cho mỗi lớp, báo cáo một lớp chỉ tạo sheet của lớp đó.
 8. **Điểm danh theo ngày / phát biểu / điểm thi đua:** vẫn có (session cũ) để tương thích.
-9. **Báo cáo lớp:** lọc theo khoảng tuần học (tuần 1–35); số liệu chuyên cần và đánh giá, kể cả file Excel, chỉ lấy trong khoảng tuần đã chọn.
+9. **Báo cáo lớp:** lọc theo khoảng tuần học (tuần 1–35); số liệu chuyên cần và đánh giá, kể cả file Excel báo cáo, chỉ lấy trong khoảng tuần đã chọn. File Excel điểm học tập là luồng riêng, lấy điểm HK1 hoặc cả năm đã lưu.
 10. **Bảo mật:** proxy + layout; RLS; lỗi kỹ thuật không lộ ra UI.
 11. **Thời khóa biểu:** bảng nhập nhanh trên trang quản lý lớp; dữ liệu tự động lưu trong Supabase theo tài khoản giáo viên nên vẫn hiển thị sau khi đăng xuất hoặc đăng nhập trên thiết bị khác. Bản lưu cũ trên thiết bị được tự động chuyển lên tài khoản khi chưa có dữ liệu máy chủ.
 12. **Health:** `npm run lint`, `npm run typecheck`, `npm run build`.
@@ -89,7 +89,7 @@ Khi conflict giữa master prompt và code/docs trong repo: **ưu tiên code + f
 
 - Subject CRUD, điểm theo từng môn (Toán, Tiếng Việt…), công thức điểm nâng cao, comment template.
 - Entity Parent / Enrollment đa năm / AcademicYear table.
-- Export Excel nhiều loại, print-friendly CSS đầy đủ, onboarding wizard.
+- Print-friendly CSS đầy đủ, onboarding wizard.
 - Audit log UI, dark mode, i18n EN, global search toàn hệ thống.
 - Unit / integration / E2E test suite đầy đủ.
 - `npm run setup` one-command + Docker Postgres local thay Supabase (nếu sau này cần offline).
