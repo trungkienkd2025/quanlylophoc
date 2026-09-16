@@ -1,13 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { WeekBoard } from "@/app/(app)/classes/[classId]/weeks/[week]/week-board";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toWeeklyAttendanceStatus } from "@/lib/attendance/format";
 import { DEFAULT_EVALUATION_LEVELS } from "@/lib/evaluations/levels";
-import { TOTAL_WEEKS, weekLabel, weekNumbers } from "@/lib/weeks";
+import { selectWeekForDate, TOTAL_WEEKS, weekLabel, weekNumbers } from "@/lib/weeks";
 import type { WeekExportData } from "@/lib/weeks/export-excel";
 import { cn } from "@/lib/utils";
 import type { AttendanceStatus } from "@/types/attendance";
@@ -41,6 +41,7 @@ export function ClassWeeksPanel({
   weekMetas,
   initialStudentId,
   initialWeek,
+  autoSelectCurrentWeek,
 }: {
   classId: string;
   className: string;
@@ -51,9 +52,17 @@ export function ClassWeeksPanel({
   weekMetas: WeekMeta[];
   initialStudentId?: string;
   initialWeek: number;
+  autoSelectCurrentWeek: boolean;
 }) {
   const [selectedWeek, setSelectedWeek] = useState<number>(initialWeek);
   const [dateOverrides, setDateOverrides] = useState<Record<number, { start_date: string; end_date: string }>>({});
+
+  useEffect(() => {
+    if (!autoSelectCurrentWeek) return;
+
+    // This runs in the browser so the default follows the teacher's computer date.
+    setSelectedWeek(selectWeekForDate(schoolYear, weekMetas, new Date()));
+  }, [autoSelectCurrentWeek, schoolYear, weekMetas]);
 
   const savedWeeks = useMemo(() => {
     const set = new Set<number>();
