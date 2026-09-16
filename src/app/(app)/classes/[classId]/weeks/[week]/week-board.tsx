@@ -24,14 +24,14 @@ type AttendanceRow = { student_id: string; status: AttendanceStatus; note: strin
 type EvaluationRow = { student_id: string; level: string; comment: string };
 
 type StudentState = {
-  status: AttendanceStatus;
+  status: AttendanceStatus | null;
   note: string;
   level: string;
   comment: string;
 };
 
 function emptyState(): StudentState {
-  return { status: "PRESENT", note: "", level: "", comment: "" };
+  return { status: null, note: "", level: "", comment: "" };
 }
 
 function buildStateMap(
@@ -43,9 +43,9 @@ function buildStateMap(
   const attendanceMap = new Map(attendance.map((row) => [row.student_id, row]));
   const evaluationMap = new Map(evaluations.map((row) => [row.student_id, row]));
   for (const student of students) {
-    const rawStatus = attendanceMap.get(student.id)?.status ?? "PRESENT";
+    const rawStatus = attendanceMap.get(student.id)?.status;
     next[student.id] = {
-      status: toWeeklyAttendanceStatus(rawStatus),
+      status: rawStatus ? toWeeklyAttendanceStatus(rawStatus) : null,
       note: attendanceMap.get(student.id)?.note ?? "",
       level: evaluationMap.get(student.id)?.level ?? "",
       comment: evaluationMap.get(student.id)?.comment ?? "",
@@ -54,7 +54,8 @@ function buildStateMap(
   return next;
 }
 
-function statusClass(status: AttendanceStatus): string {
+function statusClass(status: AttendanceStatus | null): string {
+  if (status === null) return "border-muted bg-muted/40 text-muted-foreground";
   return toWeeklyAttendanceStatus(status) === "PRESENT"
     ? "border-emerald-500 bg-emerald-50 text-emerald-800"
     : "border-rose-500 bg-rose-50 text-rose-800";
@@ -139,13 +140,11 @@ export function WeekBoard({
     startTransition(async () => {
       setMessage(null);
       setError(null);
-      const attendancePayload = students.map((student) => {
+      const attendancePayload = students.flatMap((student) => {
         const state = byStudent[student.id] ?? emptyState();
-        return {
-          student_id: student.id,
-          status: state.status,
-          note: state.note,
-        };
+        return state.status === null
+          ? []
+          : [{ student_id: student.id, status: state.status, note: state.note }];
       });
       const evaluationPayload = students.map((student) => {
         const state = byStudent[student.id] ?? emptyState();
@@ -295,7 +294,7 @@ export function WeekBoard({
                       statusClass(selectedState.status),
                     )}
                   >
-                    {weeklyAttendanceStatusLabel(selectedState.status)}
+                    {selectedState.status ? weeklyAttendanceStatusLabel(selectedState.status) : "Chưa điểm danh"}
                   </span>
                 </div>
 
@@ -306,7 +305,7 @@ export function WeekBoard({
                       <button
                         className={cn(
                           "rounded-lg border px-3 py-2 text-xs font-semibold",
-                          toWeeklyAttendanceStatus(selectedState.status) === option.value
+                          selectedState.status !== null && toWeeklyAttendanceStatus(selectedState.status) === option.value
                             ? statusClass(option.value)
                             : "bg-background hover:bg-muted",
                         )}
@@ -317,6 +316,13 @@ export function WeekBoard({
                         {option.label}
                       </button>
                     ))}
+                    <button
+                      className="rounded-lg border px-3 py-2 text-xs font-semibold bg-background hover:bg-muted"
+                      onClick={() => patchSelected({ status: null, note: "" })}
+                      type="button"
+                    >
+                      Để trống
+                    </button>
                   </div>
                 </div>
 

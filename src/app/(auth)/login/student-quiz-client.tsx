@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { QuizQuestion, LessonVideo } from "@/types/student-quiz";
 import type { EntertainmentVideo } from "@/types/entertainment";
-import { getQuizQuestions, getLessonVideos, submitQuizResult, verifyTeacherCode } from "@/app/actions/student-quiz";
+import { getQuizQuestions, getLessonVideos, submitQuizResult, verifyTeacherCode, recordPortalAttendance } from "@/app/actions/student-quiz";
 import { getEntertainmentVideosForTeacherCode } from "@/app/actions/entertainment";
 import { LoginForm } from "./login-form";
 import { Button } from "@/components/ui/button";
@@ -42,6 +42,7 @@ export function StudentQuizClient({ initialQuestions, initialVideos = [], return
 
   // Trạng thái bài làm
   const [isQuizStarted, setIsQuizStarted] = useState(false);
+  const [isStartingQuiz, setIsStartingQuiz] = useState(false);
   const [currentIdx, setCurrentIdx] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -247,21 +248,29 @@ export function StudentQuizClient({ initialQuestions, initialVideos = [], return
   }
 
   // Click bắt đầu làm bài (yêu cầu điền tên & lớp trước)
-  function handleStartQuiz() {
-    if (!studentName.trim() || !className.trim()) {
+  async function handleStartQuiz() {
+    const cleanName = studentName.trim();
+    const cleanClass = className.trim();
+    if (!cleanName || !cleanClass) {
       const element = document.getElementById("student-info-section");
-      if (element) {
-        element.scrollIntoView({ behavior: "smooth" });
-      }
+      if (element) element.scrollIntoView({ behavior: "smooth" });
       return;
     }
 
-    // Lưu tạm thông tin vào localStorage
-    localStorage.setItem("qllh.quiz.studentName", studentName);
-    localStorage.setItem("qllh.quiz.className", className);
+    setIsStartingQuiz(true);
+    try {
+      // Only grade 4 and 5 students are eligible. A non-match deliberately stays blank.
+      if ((selectedGrade === 4 || selectedGrade === 5) && teacherCode) {
+        await recordPortalAttendance(cleanName, cleanClass, selectedGrade, teacherCode);
+      }
 
-    setIsQuizStarted(true);
-    setTimeElapsed(0);
+      localStorage.setItem("qllh.quiz.studentName", cleanName);
+      localStorage.setItem("qllh.quiz.className", cleanClass);
+      setIsQuizStarted(true);
+      setTimeElapsed(0);
+    } finally {
+      setIsStartingQuiz(false);
+    }
   }
 
   // Chọn đáp án
@@ -664,10 +673,11 @@ export function StudentQuizClient({ initialQuestions, initialVideos = [], return
                         </div>
 
                         <Button
+                          disabled={isStartingQuiz}
                           onClick={handleStartQuiz}
                           className="w-full h-12 text-base font-extrabold bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl shadow border-b-4 border-emerald-700 active:border-b-0 active:mt-1 transition-all"
                         >
-                          Bắt đầu làm bài trắc nghiệm 🚀
+                          {isStartingQuiz ? "Đang kiểm tra thông tin…" : "Bắt đầu làm bài trắc nghiệm 🚀"}
                         </Button>
                       </CardContent>
                     </Card>
