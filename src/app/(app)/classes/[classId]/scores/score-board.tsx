@@ -384,6 +384,7 @@ export function ScoreBoard({
                       inputMode="decimal"
                       max="10"
                       min="0"
+                      step="0.01"
                       onChange={(event) =>
                         patch(entry.student_id, theoryField, event.target.value)
                       }
@@ -404,6 +405,7 @@ export function ScoreBoard({
                       inputMode="decimal"
                       max="10"
                       min="0"
+                      step="0.01"
                       onChange={(event) =>
                         patch(
                           entry.student_id,
