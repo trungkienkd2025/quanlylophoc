@@ -689,7 +689,10 @@ begin
   join public.profiles p on p.id = c.teacher_id
   where s.deleted_at is null
     and c.deleted_at is null
-    and c.grade = p_grade
+    -- The grade picker belongs to the learning-content UI. Match attendance by
+    -- the class entered by the student, so a stale picker value cannot prevent
+    -- a student in the correct grade-4/5 class from checking in.
+    and c.grade in (4, 5)
     and lower(btrim(s.full_name)) = lower(btrim(p_student_name))
     and lower(btrim(c.name)) = lower(btrim(p_class_name))
     and p.teacher_code = upper(btrim(p_teacher_code))
