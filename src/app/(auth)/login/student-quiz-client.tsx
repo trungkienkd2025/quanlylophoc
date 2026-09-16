@@ -638,7 +638,7 @@ export function StudentQuizClient({ initialQuestions, initialVideos = [], return
                       <div className="bg-sky-500 p-4 text-white text-center">
                         <h3 className="text-lg font-extrabold flex items-center justify-center gap-2">
                           <Users className="size-5" />
-                          Nhập thông tin để làm bài
+                          NHẬP THÔNG TIN
                         </h3>
                       </div>
                       <CardContent className="p-6 space-y-4">
