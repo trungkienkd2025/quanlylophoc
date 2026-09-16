@@ -177,7 +177,7 @@ profiles
 - `students` có `UNIQUE (id, class_id)` để attendance/events FK kép không lệch lớp.
 - Tuần học: `TOTAL_WEEKS = 35` trong `src/lib/weeks.ts`; không tạo 35 cột.
 - Tổng điểm học tập HK1/cuối năm dùng một công thức duy nhất: `total = ceil(theory_score + practice_score)`; nếu thiếu lý thuyết hoặc thực hành thì tổng là 0; điểm 0 là giá trị hợp lệ. Người dùng chỉ nhập lý thuyết + thực hành, không nhập trực tiếp tổng.
-- Attendance default UI = PRESENT; persist khi giáo viên lưu tuần / buổi.
+- Điểm danh mặc định không tạo bản ghi cho học sinh chưa được chọn; cổng học sinh chỉ tự ghi Có mặt khi họ tên + lớp khớp không phân biệt hoa/thường, chỉ cho khối 4–5.
 - Tổng phát biểu / điểm thi đua = aggregate từ lịch sử event.
 - Idempotency: cùng `client_request_id` + `created_by` → retry an toàn.
 - Video giải trí chỉ nhận URL YouTube hợp lệ và được chuẩn hoá thành URL nhúng; mỗi giáo viên chỉ đọc/ghi video của mình. Cổng học sinh lấy video qua RPC chỉ đọc sau khi có mã lớp của giáo viên.

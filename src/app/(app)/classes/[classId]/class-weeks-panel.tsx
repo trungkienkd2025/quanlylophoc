@@ -111,10 +111,13 @@ export function ClassWeeksPanel({
       }
     }
 
+    const present = weekAttendance.filter(
+      (row) => activeStudentIds.has(row.student_id) && toWeeklyAttendanceStatus(row.status) === "PRESENT",
+    ).length;
     const absent = absentStudentIds.size;
-    const present = Math.max(students.length - absent, 0);
+    const unmarked = Math.max(students.length - present - absent, 0);
 
-    return { present, absent };
+    return { present, absent, unmarked };
   }, [students, weekAttendance]);
 
   const evaluationSummary = useMemo(() => {
@@ -249,6 +252,7 @@ export function ClassWeeksPanel({
               <ul className="mt-2 space-y-1 text-sm">
                 <li>Có mặt: {attendanceSummary.present}</li>
                 <li>Vắng: {attendanceSummary.absent}</li>
+                <li>Chưa điểm danh: {attendanceSummary.unmarked}</li>
               </ul>
             )}
           </CardContent>

@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { DEFAULT_QUIZ_QUESTIONS, STATIC_VIDEOS } from "@/lib/student-quiz-data";
 import { QuizQuestion, QuizSubmission, LessonVideo } from "@/types/student-quiz";
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 
 const ATTACHMENT_FILE_TYPES = new Set([
   "application/msword",
@@ -140,6 +141,41 @@ export async function getQuizQuestions(grade?: number, includeInactive = false, 
     }));
   } catch {
     return grade === undefined || grade === 4 ? DEFAULT_QUIZ_QUESTIONS : [];
+  }
+}
+
+const portalAttendanceSchema = z.object({
+  studentName: z.string().trim().min(1).max(120),
+  className: z.string().trim().min(1).max(120),
+  grade: z.union([z.literal(4), z.literal(5)]),
+  teacherCode: z.string().trim().min(1).max(50),
+});
+
+/**
+ * Marks a verified grade-4/5 student present without exposing the class list.
+ * Names and class names are matched case-insensitively by the database RPC.
+ */
+export async function recordPortalAttendance(
+  studentName: string,
+  className: string,
+  grade: number,
+  teacherCode: string,
+): Promise<{ success: boolean }> {
+  const parsed = portalAttendanceSchema.safeParse({ studentName, className, grade, teacherCode });
+  if (!parsed.success) return { success: false };
+
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase.rpc("record_portal_attendance", {
+      p_student_name: parsed.data.studentName,
+      p_class_name: parsed.data.className,
+      p_grade: parsed.data.grade,
+      p_teacher_code: parsed.data.teacherCode,
+    });
+
+    return { success: !error && data === true };
+  } catch {
+    return { success: false };
   }
 }
 
