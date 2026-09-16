@@ -116,7 +116,6 @@ export default async function ClassStudentsPage({
             schoolYear={classItem.school_year}
             semesterScoreTotals={semesterScoreTotals}
             annualScoreTotals={annualScoreTotals}
-            attendanceDate={attendanceDate}
             initialAttendance={Object.fromEntries(
               (attendanceRows ?? []).map((row) => [row.student_id, row.status]),
             )}

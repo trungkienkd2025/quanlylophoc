@@ -46,7 +46,6 @@ type StudentManagementProps = {
   schoolYear: string;
   semesterScoreTotals: StudentScoreTotals;
   annualScoreTotals: StudentScoreTotals;
-  attendanceDate: string;
   initialAttendance: Record<string, AttendanceStatus>;
   students: StudentListItem[];
 };
@@ -98,7 +97,6 @@ function saveExcelFile(workbook: XLSX.WorkBook, fileName: string) {
 export function exportStudentsToExcel(input: {
   annualScoreTotals: StudentScoreTotals;
   attendance: Record<string, AttendanceStatus>;
-  attendanceDate: string;
   className: string;
   schoolYear: string;
   semesterScoreTotals: StudentScoreTotals;
@@ -133,7 +131,7 @@ export function exportStudentsToExcel(input: {
       "Ngày sinh",
       "Giới tính",
       "Điểm",
-      `Điểm danh (${formatDateVi(input.attendanceDate)})`,
+      "Chức vụ",
     ],
     ...input.students.map((student, index) => [
       index + 1,
@@ -148,9 +146,9 @@ export function exportStudentsToExcel(input: {
         input.annualScoreTotals,
       ) ?? "",
       input.attendance[student.id] === "PRESENT"
-        ? "Có mặt"
+        ? "Tổ trưởng"
         : input.attendance[student.id] === "ABSENT"
-          ? "Vắng"
+          ? "Lớp trưởng"
           : "",
     ]),
     [],
@@ -222,7 +220,6 @@ export function StudentManagement({
   schoolYear,
   semesterScoreTotals,
   annualScoreTotals,
-  attendanceDate,
   initialAttendance,
   students,
 }: StudentManagementProps) {
@@ -427,7 +424,6 @@ export function StudentManagement({
                 exportStudentsToExcel({
                   annualScoreTotals,
                   attendance,
-                  attendanceDate,
                   className,
                   schoolYear,
                   semesterScoreTotals,
