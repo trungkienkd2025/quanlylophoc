@@ -43,6 +43,8 @@ export function StudentQuizClient({ initialQuestions, initialVideos = [], return
   // Trạng thái bài làm
   const [isQuizStarted, setIsQuizStarted] = useState(false);
   const [isStartingQuiz, setIsStartingQuiz] = useState(false);
+  const [isRecordingAttendance, setIsRecordingAttendance] = useState(false);
+  const [attendanceMessage, setAttendanceMessage] = useState<string | null>(null);
   const [currentIdx, setCurrentIdx] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -247,29 +249,68 @@ export function StudentQuizClient({ initialQuestions, initialVideos = [], return
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   }
 
-  // Click bắt đầu làm bài (yêu cầu điền tên & lớp trước)
-  async function handleStartQuiz() {
+  function getStudentInfo() {
     const cleanName = studentName.trim();
     const cleanClass = className.trim();
+
     if (!cleanName || !cleanClass) {
       const element = document.getElementById("student-info-section");
       if (element) element.scrollIntoView({ behavior: "smooth" });
-      return;
+      return null;
     }
+
+    return { cleanName, cleanClass };
+  }
+
+  // Click bắt đầu làm bài (yêu cầu điền tên & lớp trước)
+  async function handleStartQuiz() {
+    const studentInfo = getStudentInfo();
+    if (!studentInfo) return;
 
     setIsStartingQuiz(true);
     try {
-      // Only grade 4 and 5 students are eligible. A non-match deliberately stays blank.
-      if ((selectedGrade === 4 || selectedGrade === 5) && teacherCode) {
-        await recordPortalAttendance(cleanName, cleanClass, selectedGrade, teacherCode);
-      }
-
-      localStorage.setItem("qllh.quiz.studentName", cleanName);
-      localStorage.setItem("qllh.quiz.className", cleanClass);
+      localStorage.setItem("qllh.quiz.studentName", studentInfo.cleanName);
+      localStorage.setItem("qllh.quiz.className", studentInfo.cleanClass);
       setIsQuizStarted(true);
       setTimeElapsed(0);
     } finally {
       setIsStartingQuiz(false);
+    }
+  }
+
+  async function handleRecordAttendance() {
+    const studentInfo = getStudentInfo();
+    if (!studentInfo) return;
+
+    if (selectedGrade !== 4 && selectedGrade !== 5) {
+      setAttendanceMessage("Điểm danh trực tuyến hiện dành cho học sinh khối 4 và khối 5.");
+      return;
+    }
+
+    if (!teacherCode) {
+      setAttendanceMessage("Em hãy nhập mã lớp của giáo viên trước khi điểm danh.");
+      return;
+    }
+
+    setIsRecordingAttendance(true);
+    setAttendanceMessage(null);
+    try {
+      const result = await recordPortalAttendance(
+        studentInfo.cleanName,
+        studentInfo.cleanClass,
+        selectedGrade,
+        teacherCode,
+      );
+
+      if (result.success) {
+        localStorage.setItem("qllh.quiz.studentName", studentInfo.cleanName);
+        localStorage.setItem("qllh.quiz.className", studentInfo.cleanClass);
+        setAttendanceMessage("Điểm danh thành công. Em đã được ghi nhận có mặt.");
+      } else {
+        setAttendanceMessage("Chưa thể điểm danh. Em hãy kiểm tra lại họ tên, lớp học và mã lớp.");
+      }
+    } finally {
+      setIsRecordingAttendance(false);
     }
   }
 
@@ -656,7 +697,10 @@ export function StudentQuizClient({ initialQuestions, initialVideos = [], return
                           <Input
                             id="sName"
                             value={studentName}
-                            onChange={e => setStudentName(e.target.value)}
+                            onChange={e => {
+                              setStudentName(e.target.value);
+                              setAttendanceMessage(null);
+                            }}
                             placeholder="Ví dụ: Nguyễn Văn An"
                             className="h-12 text-base font-bold border-sky-200 focus:border-sky-500 focus:ring-sky-500 rounded-xl"
                           />
@@ -666,19 +710,37 @@ export function StudentQuizClient({ initialQuestions, initialVideos = [], return
                           <Input
                             id="sClass"
                             value={className}
-                            onChange={e => setClassName(e.target.value)}
+                            onChange={e => {
+                              setClassName(e.target.value);
+                              setAttendanceMessage(null);
+                            }}
                             placeholder={`Ví dụ: ${selectedGrade}A1`}
                             className="h-12 text-base font-bold border-sky-200 focus:border-sky-500 focus:ring-sky-500 rounded-xl"
                           />
                         </div>
 
-                        <Button
-                          disabled={isStartingQuiz}
-                          onClick={handleStartQuiz}
-                          className="w-full h-12 text-base font-extrabold bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl shadow border-b-4 border-emerald-700 active:border-b-0 active:mt-1 transition-all"
-                        >
-                          {isStartingQuiz ? "Đang kiểm tra thông tin…" : "Bắt đầu làm bài trắc nghiệm 🚀"}
-                        </Button>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          <Button
+                            disabled={isStartingQuiz || isRecordingAttendance}
+                            onClick={handleStartQuiz}
+                            className="h-12 text-base font-extrabold bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl shadow border-b-4 border-emerald-700 active:border-b-0 active:mt-1 transition-all"
+                          >
+                            {isStartingQuiz ? "Đang kiểm tra thông tin…" : "Bắt đầu làm bài 🚀"}
+                          </Button>
+                          <Button
+                            type="button"
+                            disabled={isStartingQuiz || isRecordingAttendance}
+                            onClick={handleRecordAttendance}
+                            className="h-12 text-base font-extrabold bg-sky-500 hover:bg-sky-600 text-white rounded-xl shadow border-b-4 border-sky-700 active:border-b-0 active:mt-1 transition-all"
+                          >
+                            {isRecordingAttendance ? "Đang điểm danh…" : "Điểm danh ✓"}
+                          </Button>
+                        </div>
+                        {attendanceMessage && (
+                          <p className="rounded-xl bg-sky-50 px-3 py-2 text-center text-sm font-semibold text-sky-800" role="status">
+                            {attendanceMessage}
+                          </p>
+                        )}
                       </CardContent>
                     </Card>
                   </section>
