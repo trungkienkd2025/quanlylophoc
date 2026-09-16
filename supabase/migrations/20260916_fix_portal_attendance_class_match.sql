@@ -1,5 +1,6 @@
--- Additive patch for existing projects: record portal attendance for grade 4 and 5.
--- Students are matched by trimmed, case-insensitive full name and class name.
+-- Fix existing projects: attendance must follow the entered class, not the
+-- grade selected for learning content. The target class is still restricted to
+-- grades 4 and 5, and the teacher code remains mandatory.
 create or replace function public.record_portal_attendance(
   p_student_name text,
   p_class_name text,
@@ -30,9 +31,6 @@ begin
   join public.profiles p on p.id = c.teacher_id
   where s.deleted_at is null
     and c.deleted_at is null
-    -- The grade picker belongs to the learning-content UI. Match attendance by
-    -- the class entered by the student, so a stale picker value cannot prevent
-    -- a student in the correct grade-4/5 class from checking in.
     and c.grade in (4, 5)
     and lower(btrim(s.full_name)) = lower(btrim(p_student_name))
     and lower(btrim(c.name)) = lower(btrim(p_class_name))
@@ -41,13 +39,11 @@ begin
 
   if v_student_id is null then return false; end if;
 
-  -- Keep the daily attendance view in sync. No other student receives a record.
   insert into public.attendance (class_id, student_id, date, status, note)
   values (v_class_id, v_student_id, v_today, 'PRESENT', '')
   on conflict (student_id, date) do update
     set status = 'PRESENT', note = '', updated_at = now();
 
-  -- When the teacher has scheduled the current week, also update the main weekly board.
   select cw.week_number into v_week_number
   from public.class_weeks cw
   where cw.class_id = v_class_id
