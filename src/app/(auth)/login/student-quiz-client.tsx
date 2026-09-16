@@ -5,6 +5,7 @@ import { QuizQuestion, LessonVideo } from "@/types/student-quiz";
 import type { EntertainmentVideo } from "@/types/entertainment";
 import { getQuizQuestions, getLessonVideos, submitQuizResult, verifyTeacherCode, recordPortalAttendance } from "@/app/actions/student-quiz";
 import { getEntertainmentVideosForTeacherCode } from "@/app/actions/entertainment";
+import { resolvePortalAttendanceGrade } from "@/lib/student-quiz/attendance";
 import { LoginForm } from "./login-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -282,7 +283,9 @@ export function StudentQuizClient({ initialQuestions, initialVideos = [], return
     const studentInfo = getStudentInfo();
     if (!studentInfo) return;
 
-    if (selectedGrade !== 4 && selectedGrade !== 5) {
+    const attendanceGrade = resolvePortalAttendanceGrade(studentInfo.cleanClass, selectedGrade);
+
+    if (attendanceGrade !== 4 && attendanceGrade !== 5) {
       setAttendanceMessage("Điểm danh trực tuyến hiện dành cho học sinh khối 4 và khối 5.");
       return;
     }
@@ -298,7 +301,7 @@ export function StudentQuizClient({ initialQuestions, initialVideos = [], return
       const result = await recordPortalAttendance(
         studentInfo.cleanName,
         studentInfo.cleanClass,
-        selectedGrade,
+        attendanceGrade,
         teacherCode,
       );
 
