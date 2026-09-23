@@ -1,5 +1,6 @@
 import * as XLSX from "xlsx";
 import { weeklyAttendanceStatusLabel } from "@/lib/attendance/format";
+import { sortStudents } from "@/lib/students/sort";
 import { weekLabel } from "@/lib/weeks";
 import type { AttendanceStatus } from "@/types/attendance";
 
@@ -27,9 +28,7 @@ export function downloadWeekReportExcel(input: {
 }) {
   const workbook = XLSX.utils.book_new();
   for (const weekData of input.weeks) {
-    const sorted = [...weekData.students].sort((a, b) =>
-      a.full_name.localeCompare(b.full_name, "vi", { sensitivity: "base" }),
-    );
+    const sorted = sortStudents(weekData.students, "name");
     const rows = sorted.map((student, index) => ({
       STT: index + 1,
       "Mã học sinh": student.student_code,
