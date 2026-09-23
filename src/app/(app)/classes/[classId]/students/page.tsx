@@ -3,7 +3,6 @@ import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { aggregateStudentPointTotals } from "@/lib/points/format";
-import { calculateLearningScoreTotal } from "@/lib/scores/calculate";
 import { getLocalDateString } from "@/lib/dates";
 import { createClient } from "@/lib/supabase/server";
 import { StudentManagement } from "./student-management";
@@ -41,21 +40,11 @@ export default async function ClassStudentsPage({
 
   const [
     { data: pointEvents },
-    { data: semesterScores },
-    { data: annualScores },
     { data: attendanceRows },
   ] = await Promise.all([
     supabase
       .from("student_points")
       .select("student_id, points")
-      .eq("class_id", classId),
-    supabase
-      .from("semester_scores")
-      .select("student_id, theory_score, practice_score")
-      .eq("class_id", classId),
-    supabase
-      .from("annual_scores")
-      .select("student_id, theory_score, practice_score")
       .eq("class_id", classId),
     supabase
       .from("attendance")
@@ -65,18 +54,6 @@ export default async function ClassStudentsPage({
   ]);
 
   const pointTotals = aggregateStudentPointTotals(pointEvents ?? []);
-  const semesterScoreTotals = Object.fromEntries(
-    (semesterScores ?? []).map((score) => [
-      score.student_id,
-      calculateLearningScoreTotal(score.theory_score, score.practice_score),
-    ]),
-  );
-  const annualScoreTotals = Object.fromEntries(
-    (annualScores ?? []).map((score) => [
-      score.student_id,
-      calculateLearningScoreTotal(score.theory_score, score.practice_score),
-    ]),
-  );
 
   return (
     <>
@@ -114,8 +91,6 @@ export default async function ClassStudentsPage({
             initialEditId={initialEditId}
             pointTotals={pointTotals}
             schoolYear={classItem.school_year}
-            semesterScoreTotals={semesterScoreTotals}
-            annualScoreTotals={annualScoreTotals}
             initialAttendance={Object.fromEntries(
               (attendanceRows ?? []).map((row) => [row.student_id, row.status]),
             )}
