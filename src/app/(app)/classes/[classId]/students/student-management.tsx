@@ -266,7 +266,7 @@ export function StudentManagement({
     });
 
     return () => window.cancelAnimationFrame(frameId);
-  }, [panel]);
+  }, [editingStudent?.id, panel]);
 
   const filteredStudents = useMemo(() => {
     const query = search.trim().toLowerCase();
