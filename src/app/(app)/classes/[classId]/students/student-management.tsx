@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { saveAs } from "file-saver";
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import {
   ArrowDownAZ,
   ChevronDown,
@@ -247,8 +247,26 @@ export function StudentManagement({
   const [savingAttendanceId, setSavingAttendanceId] = useState<string | null>(
     null,
   );
+  const editPanelRef = useRef<HTMLDivElement>(null);
   const [isDeleting, startDeleteTransition] = useTransition();
   const [, startAttendanceTransition] = useTransition();
+
+  useEffect(() => {
+    if (panel !== "edit") return;
+
+    const frameId = window.requestAnimationFrame(() => {
+      const prefersReducedMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      ).matches;
+
+      editPanelRef.current?.scrollIntoView({
+        behavior: prefersReducedMotion ? "auto" : "smooth",
+        block: "start",
+      });
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
+  }, [panel]);
 
   const filteredStudents = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -473,7 +491,7 @@ export function StudentManagement({
       )}
 
       {panel === "edit" && editingStudent && (
-        <div className="mb-3">
+        <div className="mb-3 scroll-mt-4" ref={editPanelRef}>
           <StudentFormPanel
             classId={classId}
             mode="edit"
