@@ -102,8 +102,9 @@ export function exportStudentsToExcel(input: {
   semesterScoreTotals: StudentScoreTotals;
   students: StudentListItem[];
 }) {
+  const sortedStudents = sortStudents(input.students, "name");
   const scoreType = getSelectedScoreType();
-  const scoreValues = input.students
+  const scoreValues = sortedStudents
     .map((student) =>
       getScoreTotal(
         student.id,
@@ -133,7 +134,7 @@ export function exportStudentsToExcel(input: {
       "Điểm",
       "Chức vụ",
     ],
-    ...input.students.map((student, index) => [
+    ...sortedStudents.map((student, index) => [
       index + 1,
       student.student_code,
       student.full_name,
@@ -152,7 +153,7 @@ export function exportStudentsToExcel(input: {
           : "",
     ]),
     [],
-    [`Sĩ số: ${input.students.length} học sinh`, "", "", "", "", "", ""],
+    [`Sĩ số: ${sortedStudents.length} học sinh`, "", "", "", "", "", ""],
     [
       `Điểm trung bình lớp: ${averageScore == null ? "" : averageScore.toFixed(1)}`,
       "",
@@ -184,7 +185,7 @@ export function exportStudentsToExcel(input: {
           vertical: "center",
         },
         border:
-          row <= input.students.length
+          row <= sortedStudents.length
             ? {
                 top: { style: "thin", color: { rgb: "808080" } },
                 bottom: { style: "thin", color: { rgb: "808080" } },
