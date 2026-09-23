@@ -44,17 +44,11 @@ type StudentManagementProps = {
   initialEditId?: string;
   pointTotals: StudentPointTotals;
   schoolYear: string;
-  semesterScoreTotals: StudentScoreTotals;
-  annualScoreTotals: StudentScoreTotals;
   initialAttendance: Record<string, AttendanceStatus>;
   students: StudentListItem[];
 };
 
 type PanelMode = "none" | "create" | "edit" | "import";
-type ScoreType = "semester" | "annual";
-type StudentScoreTotals = Record<string, number | null | undefined>;
-
-const SELECTED_SCORE_TYPE_STORAGE_KEY = "qllh:selected-score-type";
 
 function sanitizeFilenamePart(value: string) {
   return value
@@ -64,25 +58,6 @@ function sanitizeFilenamePart(value: string) {
     .replace(/Đ/g, "D")
     .replace(/[^a-zA-Z0-9]+/g, "_")
     .replace(/^_+|_+$/g, "");
-}
-
-function getSelectedScoreType(): ScoreType {
-  if (typeof window === "undefined") return "semester";
-  return window.localStorage.getItem(SELECTED_SCORE_TYPE_STORAGE_KEY) ===
-    "annual"
-    ? "annual"
-    : "semester";
-}
-
-function getScoreTotal(
-  studentId: string,
-  scoreType: ScoreType,
-  semesterScoreTotals: StudentScoreTotals,
-  annualScoreTotals: StudentScoreTotals,
-) {
-  return scoreType === "annual"
-    ? annualScoreTotals[studentId]
-    : semesterScoreTotals[studentId];
 }
 
 function saveExcelFile(workbook: XLSX.WorkBook, fileName: string) {
@@ -95,35 +70,12 @@ function saveExcelFile(workbook: XLSX.WorkBook, fileName: string) {
 }
 
 export function exportStudentsToExcel(input: {
-  annualScoreTotals: StudentScoreTotals;
   attendance: Record<string, AttendanceStatus>;
   className: string;
   schoolYear: string;
-  semesterScoreTotals: StudentScoreTotals;
   students: StudentListItem[];
 }) {
   const sortedStudents = sortStudents(input.students, "name");
-  const scoreType = getSelectedScoreType();
-  const scoreValues = sortedStudents
-    .map((student) =>
-      getScoreTotal(
-        student.id,
-        scoreType,
-        input.semesterScoreTotals,
-        input.annualScoreTotals,
-      ),
-    )
-    .filter(
-      (score): score is number =>
-        typeof score === "number" && Number.isFinite(score),
-    );
-  const averageScore = scoreValues.length
-    ? Math.round(
-        (scoreValues.reduce((sum, score) => sum + score, 0) /
-          scoreValues.length) *
-          10,
-      ) / 10
-    : null;
   const data = [
     [
       "STT",
@@ -131,7 +83,6 @@ export function exportStudentsToExcel(input: {
       "Họ và tên",
       "Ngày sinh",
       "Giới tính",
-      "Điểm",
       "Chức vụ",
     ],
     ...sortedStudents.map((student, index) => [
@@ -140,12 +91,6 @@ export function exportStudentsToExcel(input: {
       student.full_name,
       student.date_of_birth ? formatDateVi(student.date_of_birth) : "",
       genderLabel(student.gender),
-      getScoreTotal(
-        student.id,
-        scoreType,
-        input.semesterScoreTotals,
-        input.annualScoreTotals,
-      ) ?? "",
       input.attendance[student.id] === "PRESENT"
         ? "Tổ trưởng"
         : input.attendance[student.id] === "ABSENT"
@@ -153,20 +98,11 @@ export function exportStudentsToExcel(input: {
           : "",
     ]),
     [],
-    [`Sĩ số: ${sortedStudents.length} học sinh`, "", "", "", "", "", ""],
-    [
-      `Điểm trung bình lớp: ${averageScore == null ? "" : averageScore.toFixed(1)}`,
-      "",
-      "",
-      "",
-      "",
-      "",
-      "",
-    ],
+    [`Sĩ số: ${sortedStudents.length} học sinh`, "", "", "", "", ""],
   ];
   const workbook = XLSX.utils.book_new();
   const sheet = XLSX.utils.aoa_to_sheet(data);
-  const range = XLSX.utils.decode_range(sheet["!ref"] ?? "A1:G1");
+  const range = XLSX.utils.decode_range(sheet["!ref"] ?? "A1:F1");
 
   for (let row = range.s.r; row <= range.e.r; row += 1) {
     for (let col = range.s.c; col <= range.e.c; col += 1) {
@@ -181,7 +117,7 @@ export function exportStudentsToExcel(input: {
             : undefined,
         alignment: {
           horizontal:
-            row === 0 || [0, 1, 3, 4, 5, 6].includes(col) ? "center" : "left",
+            row === 0 || [0, 1, 3, 4, 5].includes(col) ? "center" : "left",
           vertical: "center",
         },
         border:
@@ -203,7 +139,6 @@ export function exportStudentsToExcel(input: {
     { wch: 35 },
     { wch: 18 },
     { wch: 15 },
-    { wch: 12 },
     { wch: 22 },
   ];
   XLSX.utils.book_append_sheet(workbook, sheet, "Danh sách học sinh");
@@ -219,8 +154,6 @@ export function StudentManagement({
   initialEditId,
   pointTotals,
   schoolYear,
-  semesterScoreTotals,
-  annualScoreTotals,
   initialAttendance,
   students,
 }: StudentManagementProps) {
@@ -441,11 +374,9 @@ export function StudentManagement({
               className="h-9 whitespace-nowrap"
               onClick={() =>
                 exportStudentsToExcel({
-                  annualScoreTotals,
                   attendance,
                   className,
                   schoolYear,
-                  semesterScoreTotals,
                   students: filteredStudents,
                 })
               }
