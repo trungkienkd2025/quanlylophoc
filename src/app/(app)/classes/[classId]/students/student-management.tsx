@@ -494,6 +494,7 @@ export function StudentManagement({
         <div className="mb-3 scroll-mt-4" ref={editPanelRef}>
           <StudentFormPanel
             classId={classId}
+            key={editingStudent.id}
             mode="edit"
             onClose={closePanel}
             onSuccess={() => setFeedback("Đã lưu thông tin học sinh.")}
