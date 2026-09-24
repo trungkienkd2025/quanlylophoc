@@ -20,6 +20,7 @@ import { saveStudentAttendanceToday } from "@/app/actions/attendance";
 import {
   softDeleteAllStudents,
   softDeleteStudent,
+  updateStudentHomeworkStatus,
 } from "@/app/actions/students";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -30,7 +31,7 @@ import {
   type StudentSortMode,
 } from "@/lib/students/sort";
 import { formatPointsTotal } from "@/lib/points/format";
-import type { StudentListItem } from "@/types/student";
+import type { HomeworkStatus, StudentListItem } from "@/types/student";
 import type { StudentPointTotals } from "@/types/points";
 import type { AttendanceStatus } from "@/types/attendance";
 import { StudentFormPanel } from "./student-form-panel";
@@ -181,6 +182,14 @@ export function StudentManagement({
   const [savingAttendanceId, setSavingAttendanceId] = useState<string | null>(
     null,
   );
+  const [homeworkStatus, setHomeworkStatus] = useState(
+    () =>
+      Object.fromEntries(
+        students.map((student) => [student.id, student.homework_status]),
+      ),
+  );
+  const [homeworkMenuId, setHomeworkMenuId] = useState<string | null>(null);
+  const [savingHomeworkId, setSavingHomeworkId] = useState<string | null>(null);
   const editPanelRef = useRef<HTMLDivElement>(null);
   const [isDeleting, startDeleteTransition] = useTransition();
   const [, startAttendanceTransition] = useTransition();
@@ -310,6 +319,44 @@ export function StudentManagement({
       }
       setSavingAttendanceId(null);
     });
+  }
+
+  function handleHomeworkStatus(
+    student: StudentListItem,
+    status: HomeworkStatus,
+  ) {
+    const previousStatus = homeworkStatus[student.id] ?? null;
+    setHomeworkStatus((current) => ({ ...current, [student.id]: status }));
+    setHomeworkMenuId(null);
+    setSavingHomeworkId(student.id);
+    setError(null);
+
+    startAttendanceTransition(async () => {
+      const result = await updateStudentHomeworkStatus(
+        classId,
+        student.id,
+        status,
+      );
+      if (result.error) {
+        setHomeworkStatus((current) => ({
+          ...current,
+          [student.id]: previousStatus,
+        }));
+        setError(result.error);
+      } else {
+        setFeedback(
+          `${student.full_name}: ${status === "SUBMITTED" ? "đã nộp bài" : "chưa nộp bài"}.`,
+        );
+        router.refresh();
+      }
+      setSavingHomeworkId(null);
+    });
+  }
+
+  function homeworkStatusLabel(status: HomeworkStatus | null | undefined) {
+    if (status === "SUBMITTED") return "Đã nộp bài";
+    if (status === "NOT_SUBMITTED") return "Chưa nộp bài";
+    return "Chọn nộp bài";
   }
 
   return (
@@ -489,6 +536,8 @@ export function StudentManagement({
                   <th className="px-3 py-2 text-xs font-semibold">Giới tính</th>
                   <th className="px-3 py-2 text-xs font-semibold">Điểm</th>
                   <th className="px-3 py-2 text-xs font-semibold">Thao tác</th>
+                  <th className="px-3 py-2 text-xs font-semibold">Chức vụ</th>
+                  <th className="px-3 py-2 text-xs font-semibold">Nộp bài</th>
                 </tr>
               </thead>
               <tbody>
@@ -543,69 +592,123 @@ export function StudentManagement({
                           <Trash2 className="size-4" />
                           Xóa
                         </Button>
-                        <div className="relative">
-                          <Button
+                      </div>
+                    </td>
+                    <td className="px-3 py-2">
+                      <div className="relative">
+                        <Button
+                          aria-label={`Điểm danh ${student.full_name}`}
+                          aria-expanded={attendanceMenuId === student.id}
+                          aria-haspopup="menu"
+                          className="min-w-28"
+                          disabled={savingAttendanceId === student.id}
+                          onClick={() =>
+                            setAttendanceMenuId((current) =>
+                              current === student.id ? null : student.id,
+                            )
+                          }
+                          size="sm"
+                          type="button"
+                          variant="outline"
+                        >
+                          {savingAttendanceId === student.id
+                            ? "Đang lưu…"
+                            : attendance[student.id] === "PRESENT"
+                              ? "Tổ trưởng"
+                              : attendance[student.id] === "ABSENT"
+                                ? "Lớp trưởng"
+                                : "\u00a0"}
+                          <ChevronDown className="size-4" />
+                        </Button>
+                        {attendanceMenuId === student.id && (
+                          <div
                             aria-label={`Điểm danh ${student.full_name}`}
-                            aria-expanded={attendanceMenuId === student.id}
-                            aria-haspopup="menu"
-                            className="min-w-28"
-                            disabled={savingAttendanceId === student.id}
-                            onClick={() =>
-                              setAttendanceMenuId((current) =>
-                                current === student.id ? null : student.id,
-                              )
-                            }
-                            size="sm"
-                            type="button"
-                            variant="outline"
+                            className="absolute right-0 z-20 mt-1 w-32 rounded-md border bg-popover p-1 text-popover-foreground shadow-md"
+                            role="menu"
                           >
-                            {savingAttendanceId === student.id
-                              ? "Đang lưu…"
-                              : attendance[student.id] === "PRESENT"
-                                ? "Tổ trưởng"
-                                : attendance[student.id] === "ABSENT"
-                                  ? "Lớp trưởng"
-                                  : "\u00a0"}
-                            <ChevronDown className="size-4" />
-                          </Button>
-                          {attendanceMenuId === student.id && (
-                            <div
-                              aria-label={`Điểm danh ${student.full_name}`}
-                              className="absolute right-0 z-20 mt-1 w-32 rounded-md border bg-popover p-1 text-popover-foreground shadow-md"
-                              role="menu"
+                            <button
+                              aria-label="Bỏ lựa chọn"
+                              className="w-full rounded-sm px-3 py-2 text-left text-sm hover:bg-accent"
+                              onClick={() => handleAttendance(student, null)}
+                              role="menuitem"
+                              type="button"
                             >
-                              <button
-                                aria-label="Bỏ lựa chọn"
-                                className="w-full rounded-sm px-3 py-2 text-left text-sm hover:bg-accent"
-                                onClick={() => handleAttendance(student, null)}
-                                role="menuitem"
-                                type="button"
-                              >
-                                {"\u00a0"}
-                              </button>
-                              <button
-                                className="w-full rounded-sm px-3 py-2 text-left text-sm hover:bg-accent"
-                                onClick={() =>
-                                  handleAttendance(student, "ABSENT")
-                                }
-                                role="menuitem"
-                                type="button"
-                              >
-                                Lớp trưởng
-                              </button>
-                              <button
-                                className="w-full rounded-sm px-3 py-2 text-left text-sm hover:bg-accent"
-                                onClick={() =>
-                                  handleAttendance(student, "PRESENT")
-                                }
-                                role="menuitem"
-                                type="button"
-                              >
-                                Tổ trưởng
-                              </button>
-                            </div>
-                          )}
-                        </div>
+                              {"\u00a0"}
+                            </button>
+                            <button
+                              className="w-full rounded-sm px-3 py-2 text-left text-sm hover:bg-accent"
+                              onClick={() =>
+                                handleAttendance(student, "ABSENT")
+                              }
+                              role="menuitem"
+                              type="button"
+                            >
+                              Lớp trưởng
+                            </button>
+                            <button
+                              className="w-full rounded-sm px-3 py-2 text-left text-sm hover:bg-accent"
+                              onClick={() =>
+                                handleAttendance(student, "PRESENT")
+                              }
+                              role="menuitem"
+                              type="button"
+                            >
+                              Tổ trưởng
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-3 py-2">
+                      <div className="relative">
+                        <Button
+                          aria-label={`Trạng thái nộp bài ${student.full_name}`}
+                          aria-expanded={homeworkMenuId === student.id}
+                          aria-haspopup="menu"
+                          className="min-w-32"
+                          disabled={savingHomeworkId === student.id}
+                          onClick={() =>
+                            setHomeworkMenuId((current) =>
+                              current === student.id ? null : student.id,
+                            )
+                          }
+                          size="sm"
+                          type="button"
+                          variant="outline"
+                        >
+                          {savingHomeworkId === student.id
+                            ? "Đang lưu…"
+                            : homeworkStatusLabel(homeworkStatus[student.id])}
+                          <ChevronDown className="size-4" />
+                        </Button>
+                        {homeworkMenuId === student.id && (
+                          <div
+                            aria-label={`Trạng thái nộp bài ${student.full_name}`}
+                            className="absolute right-0 z-20 mt-1 w-36 rounded-md border bg-popover p-1 text-popover-foreground shadow-md"
+                            role="menu"
+                          >
+                            <button
+                              className="w-full rounded-sm px-3 py-2 text-left text-sm hover:bg-accent"
+                              onClick={() =>
+                                handleHomeworkStatus(student, "SUBMITTED")
+                              }
+                              role="menuitem"
+                              type="button"
+                            >
+                              Đã nộp bài
+                            </button>
+                            <button
+                              className="w-full rounded-sm px-3 py-2 text-left text-sm hover:bg-accent"
+                              onClick={() =>
+                                handleHomeworkStatus(student, "NOT_SUBMITTED")
+                              }
+                              role="menuitem"
+                              type="button"
+                            >
+                              Chưa nộp bài
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -722,6 +825,56 @@ export function StudentManagement({
                           type="button"
                         >
                           Tổ trưởng
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <div className="relative">
+                    <Button
+                      aria-label={`Trạng thái nộp bài ${student.full_name}`}
+                      aria-expanded={homeworkMenuId === student.id}
+                      aria-haspopup="menu"
+                      className="h-8 w-full"
+                      disabled={savingHomeworkId === student.id}
+                      onClick={() =>
+                        setHomeworkMenuId((current) =>
+                          current === student.id ? null : student.id,
+                        )
+                      }
+                      size="sm"
+                      type="button"
+                      variant="outline"
+                    >
+                      {savingHomeworkId === student.id
+                        ? "Đang lưu…"
+                        : homeworkStatusLabel(homeworkStatus[student.id])}
+                      <ChevronDown className="size-3.5" />
+                    </Button>
+                    {homeworkMenuId === student.id && (
+                      <div
+                        aria-label={`Trạng thái nộp bài ${student.full_name}`}
+                        className="absolute right-0 z-20 mt-1 w-full min-w-36 rounded-md border bg-popover p-1 text-popover-foreground shadow-md"
+                        role="menu"
+                      >
+                        <button
+                          className="w-full rounded-sm px-3 py-2 text-left text-sm hover:bg-accent"
+                          onClick={() =>
+                            handleHomeworkStatus(student, "SUBMITTED")
+                          }
+                          role="menuitem"
+                          type="button"
+                        >
+                          Đã nộp bài
+                        </button>
+                        <button
+                          className="w-full rounded-sm px-3 py-2 text-left text-sm hover:bg-accent"
+                          onClick={() =>
+                            handleHomeworkStatus(student, "NOT_SUBMITTED")
+                          }
+                          role="menuitem"
+                          type="button"
+                        >
+                          Chưa nộp bài
                         </button>
                       </div>
                     )}

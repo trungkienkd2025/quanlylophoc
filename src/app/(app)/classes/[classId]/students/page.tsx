@@ -31,7 +31,7 @@ export default async function ClassStudentsPage({
   const { data: students, error: studentsError } = await supabase
     .from("students")
     .select(
-      "id, student_code, full_name, date_of_birth, gender, notes, updated_at",
+      "id, student_code, full_name, date_of_birth, gender, notes, homework_status, updated_at",
     )
     .eq("class_id", classId)
     .is("deleted_at", null)
