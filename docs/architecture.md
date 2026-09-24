@@ -32,6 +32,8 @@ Model gốc phù hợp, với các thay đổi sau:
 
 `attendance.class_id`, `weekly_attendance.class_id`, `weekly_evaluations.class_id`, `semester_scores.class_id`, và `annual_scores.class_id` vẫn được lưu để truy vấn theo lớp nhanh, đồng thời FK kép `(student_id, class_id)` ngăn dữ liệu lệch lớp. Luồng chính điểm danh/đánh giá theo **tuần** (`week_number` 1–35); điểm danh theo **ngày** vẫn giữ cho buổi học cũ. Điểm học tập lưu lý thuyết / thực hành và `total_score` là generated column dùng cùng công thức cho HK1 và cuối năm: thiếu thành phần thì 0, đủ hai thành phần thì `ceil(theory_score + practice_score)`. `school_years` là cấp sở hữu năm học; `classes.school_year_id` gắn lớp vào năm.
 
+Mỗi `students` có thể lưu `homework_status` là `SUBMITTED` hoặc `NOT_SUBMITTED` để giáo viên chọn ngay trên danh sách học sinh. Đây là trạng thái nộp bài hiện tại, không phải lịch sử theo từng bài tập.
+
 Thời khóa biểu dùng một bản ghi `teacher_schedules` cho mỗi giáo viên, lưu ma trận 7 tiết × 5 ngày trong `jsonb`. Giao diện tự động upsert bản ghi sau khi giáo viên ngừng nhập; `localStorage` chỉ còn là bản dự phòng và nguồn chuyển đổi dữ liệu cũ, không phải nguồn dữ liệu chính.
 
 Khu vực giải trí dùng bảng `entertainment_videos` độc lập, gồm `teacher_id`, tên, mô tả và URL YouTube đã chuẩn hoá về dạng nhúng. Đây không phải học liệu theo khối lớp; RLS chỉ cho phép giáo viên tạo, xem, sửa hoặc xoá bản ghi của chính mình. Cổng học sinh hiển thị video của lớp sau khi mã lớp được xác thực, thông qua RPC `get_entertainment_videos_for_teacher_code`; RPC này chỉ trả về các trường hiển thị của video, còn quyền truy cập trực tiếp vào bảng vẫn thuộc giáo viên.

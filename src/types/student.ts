@@ -1,5 +1,7 @@
 export type StudentGender = "MALE" | "FEMALE" | "OTHER" | "UNSPECIFIED";
 
+export type HomeworkStatus = "SUBMITTED" | "NOT_SUBMITTED";
+
 export type StudentListItem = {
   id: string;
   student_code: string;
@@ -7,6 +9,7 @@ export type StudentListItem = {
   date_of_birth: string | null;
   gender: StudentGender;
   notes: string;
+  homework_status: HomeworkStatus | null;
 };
 
 export type StudentDetail = StudentListItem & {

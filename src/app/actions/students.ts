@@ -10,7 +10,11 @@ import {
   validateExcelRows,
 } from "@/lib/students/validation";
 import { EXCEL_IMPORT_LIMITS } from "@/lib/students/import-limits";
-import type { ExcelRowValidation, StudentGender } from "@/types/student";
+import type {
+  ExcelRowValidation,
+  HomeworkStatus,
+  StudentGender,
+} from "@/types/student";
 
 export type ActionState = {
   error?: string;
@@ -134,6 +138,38 @@ export async function updateStudent(
   revalidatePath("/dashboard");
   revalidatePath("/class-management");
   return { success: "Đã lưu thông tin học sinh." };
+}
+
+export async function updateStudentHomeworkStatus(
+  classId: string,
+  studentId: string,
+  homeworkStatus: HomeworkStatus,
+): Promise<ActionState> {
+  const access = await verifyClassAccess(classId);
+  if (!access.ok) return { error: access.error };
+
+  const parsed = z
+    .object({
+      studentId: z.string().uuid(),
+      homeworkStatus: z.enum(["SUBMITTED", "NOT_SUBMITTED"]),
+    })
+    .safeParse({ studentId, homeworkStatus });
+
+  if (!parsed.success) {
+    return { error: "Trạng thái nộp bài không hợp lệ." };
+  }
+
+  const { error } = await access.supabase
+    .from("students")
+    .update({ homework_status: parsed.data.homeworkStatus })
+    .eq("id", parsed.data.studentId)
+    .eq("class_id", access.classId)
+    .is("deleted_at", null);
+
+  if (error) return { error: "Chưa thể lưu trạng thái nộp bài. Vui lòng thử lại." };
+
+  revalidatePath(`/classes/${access.classId}/students`);
+  return { success: "Đã lưu trạng thái nộp bài." };
 }
 
 export async function softDeleteStudent(

@@ -161,7 +161,7 @@ profiles
   ├── school_years (teacher_id, name YYYY-YYYY, deleted_at)
   ├── entertainment_videos (teacher_id, title, description, youtube_url, created_at)
   └── classes (teacher_id, school_year_id, school_year, name, grade, deleted_at)
-        └── students (class_id, student_code, full_name, ..., deleted_at)
+        └── students (class_id, student_code, full_name, homework_status, ..., deleted_at)
               ├── weekly_attendance (student_id, class_id, week_number 1-35, status) UNIQUE(student_id, week_number)
               ├── weekly_evaluations (student_id, class_id, week_number, level, comment) UNIQUE(student_id, week_number)
               ├── semester_scores / annual_scores (theory, practice, total generated)
@@ -179,6 +179,7 @@ profiles
 - Tổng điểm học tập HK1/cuối năm dùng một công thức duy nhất: `total = ceil(theory_score + practice_score)`; nếu thiếu lý thuyết hoặc thực hành thì tổng là 0; điểm 0 là giá trị hợp lệ. Người dùng chỉ nhập lý thuyết + thực hành, không nhập trực tiếp tổng.
 - Điểm danh mặc định không tạo bản ghi cho học sinh chưa được chọn; tại cổng học sinh, nút **Điểm danh** chỉ ghi Có mặt khi họ tên + lớp khớp không phân biệt hoa/thường, chỉ cho khối 4–5.
 - Tổng phát biểu / điểm thi đua = aggregate từ lịch sử event.
+- Danh sách học sinh lưu trạng thái nộp bài hiện tại là `SUBMITTED` hoặc `NOT_SUBMITTED`; trạng thái này chưa gắn với từng bài tập riêng lẻ.
 - Idempotency: cùng `client_request_id` + `created_by` → retry an toàn.
 - Video giải trí chỉ nhận URL YouTube hợp lệ và được chuẩn hoá thành URL nhúng; mỗi giáo viên chỉ đọc/ghi video của mình. Cổng học sinh lấy video qua RPC chỉ đọc sau khi có mã lớp của giáo viên.
 - Timezone báo cáo / ngày: chuẩn hoá **Asia/Ho_Chi_Minh** (`src/lib/dates.ts`).

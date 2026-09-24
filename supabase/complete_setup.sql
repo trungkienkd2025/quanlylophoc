@@ -118,6 +118,7 @@ create table public.students (
   date_of_birth date,
   gender public.student_gender not null default 'UNSPECIFIED',
   notes text not null default '' check (char_length(notes) <= 2000),
+  homework_status text check (homework_status in ('SUBMITTED', 'NOT_SUBMITTED')),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   deleted_at timestamptz,
