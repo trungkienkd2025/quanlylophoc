@@ -25,7 +25,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { formatDateVi, genderLabel } from "@/lib/students/format";
+import {
+  formatBirthYear,
+  genderLabel,
+} from "@/lib/students/format";
+import { downloadStudentTemplate } from "@/lib/students/excel";
 import {
   sortStudents,
   type StudentSortMode,
@@ -72,7 +76,6 @@ function saveExcelFile(workbook: XLSX.WorkBook, fileName: string) {
 }
 
 export function exportStudentsToExcel(input: {
-  attendance: Record<string, AttendanceStatus>;
   className: string;
   schoolYear: string;
   students: StudentListItem[];
@@ -81,30 +84,24 @@ export function exportStudentsToExcel(input: {
   const data = [
     [
       "STT",
-      "Mã học sinh",
       "Họ và tên",
-      "Ngày sinh",
       "Giới tính",
-      "Chức vụ",
+      "Năm sinh",
+      "Mã học sinh",
     ],
     ...sortedStudents.map((student, index) => [
       index + 1,
-      student.student_code,
       student.full_name,
-      student.date_of_birth ? formatDateVi(student.date_of_birth) : "",
       genderLabel(student.gender),
-      input.attendance[student.id] === "PRESENT"
-        ? "Tổ trưởng"
-        : input.attendance[student.id] === "ABSENT"
-          ? "Lớp trưởng"
-          : "",
+      formatBirthYear(student.date_of_birth),
+      student.student_code,
     ]),
     [],
-    [`Sĩ số: ${sortedStudents.length} học sinh`, "", "", "", "", ""],
+    [`Sĩ số: ${sortedStudents.length} học sinh`, "", "", "", ""],
   ];
   const workbook = XLSX.utils.book_new();
   const sheet = XLSX.utils.aoa_to_sheet(data);
-  const range = XLSX.utils.decode_range(sheet["!ref"] ?? "A1:F1");
+  const range = XLSX.utils.decode_range(sheet["!ref"] ?? "A1:E1");
 
   for (let row = range.s.r; row <= range.e.r; row += 1) {
     for (let col = range.s.c; col <= range.e.c; col += 1) {
@@ -119,7 +116,7 @@ export function exportStudentsToExcel(input: {
             : undefined,
         alignment: {
           horizontal:
-            row === 0 || [0, 1, 3, 4, 5].includes(col) ? "center" : "left",
+            row === 0 || [0, 2, 3, 4].includes(col) ? "center" : "left",
           vertical: "center",
         },
         border:
@@ -137,11 +134,10 @@ export function exportStudentsToExcel(input: {
 
   sheet["!cols"] = [
     { wch: 6 },
-    { wch: 15 },
     { wch: 35 },
-    { wch: 18 },
     { wch: 15 },
-    { wch: 22 },
+    { wch: 12 },
+    { wch: 15 },
   ];
   XLSX.utils.book_append_sheet(workbook, sheet, "Danh sách học sinh");
   saveExcelFile(
@@ -417,13 +413,21 @@ export function StudentManagement({
               variant="outline"
             >
               <FileSpreadsheet className="size-4" />
-              Import Excel
+              Import file Excel
+            </Button>
+            <Button
+              className="h-9 whitespace-nowrap"
+              onClick={downloadStudentTemplate}
+              type="button"
+              variant="outline"
+            >
+              <Download className="size-4" />
+              Tải file mẫu
             </Button>
             <Button
               className="h-9 whitespace-nowrap"
               onClick={() =>
                 exportStudentsToExcel({
-                  attendance,
                   className,
                   schoolYear,
                   students: filteredStudents,
@@ -532,10 +536,11 @@ export function StudentManagement({
             <table className="min-w-full text-sm">
               <thead className="bg-muted/50 text-left">
                 <tr>
+                  <th className="px-3 py-2 text-center text-xs font-semibold">STT</th>
                   <th className="px-3 py-2 text-xs font-semibold">Họ tên</th>
-                  <th className="px-3 py-2 text-xs font-semibold">Mã HS</th>
-                  <th className="px-3 py-2 text-xs font-semibold">Ngày sinh</th>
                   <th className="px-3 py-2 text-xs font-semibold">Giới tính</th>
+                  <th className="px-3 py-2 text-xs font-semibold">Năm sinh</th>
+                  <th className="px-3 py-2 text-xs font-semibold">Mã HS</th>
                   <th className="px-3 py-2 text-xs font-semibold">Điểm</th>
                   <th className="px-3 py-2 text-xs font-semibold">Thao tác</th>
                   <th className="px-3 py-2 text-xs font-semibold">Chức vụ</th>
@@ -545,8 +550,11 @@ export function StudentManagement({
                 </tr>
               </thead>
               <tbody>
-                {filteredStudents.map((student) => (
+                {filteredStudents.map((student, index) => (
                   <tr className="border-t" key={student.id}>
+                    <td className="px-3 py-2 text-center tabular-nums">
+                      {index + 1}
+                    </td>
                     <td className="px-3 py-2 font-medium">
                       <Link
                         className="hover:text-primary hover:underline"
@@ -555,11 +563,11 @@ export function StudentManagement({
                         {student.full_name}
                       </Link>
                     </td>
-                    <td className="px-3 py-2">{student.student_code}</td>
-                    <td className="px-3 py-2">
-                      {formatDateVi(student.date_of_birth)}
-                    </td>
                     <td className="px-3 py-2">{genderLabel(student.gender)}</td>
+                    <td className="px-3 py-2 tabular-nums">
+                      {formatBirthYear(student.date_of_birth)}
+                    </td>
+                    <td className="px-3 py-2">{student.student_code}</td>
                     <td className="px-3 py-2 font-medium">
                       {formatPointsTotal(pointTotals[student.id] ?? 0)}
                     </td>
@@ -724,7 +732,7 @@ export function StudentManagement({
           </div>
 
           <div className="divide-y rounded-lg border bg-card md:hidden">
-            {filteredStudents.map((student) => (
+            {filteredStudents.map((student, index) => (
               <div className="px-3 py-2" key={student.id}>
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
@@ -735,9 +743,8 @@ export function StudentManagement({
                       {student.full_name}
                     </Link>
                     <p className="text-xs text-muted-foreground">
-                      {student.student_code} ·{" "}
-                      {formatDateVi(student.date_of_birth)} ·{" "}
-                      {genderLabel(student.gender)}
+                      STT {index + 1} · {genderLabel(student.gender)} · Năm sinh{" "}
+                      {formatBirthYear(student.date_of_birth)}
                     </p>
                   </div>
                 </div>
