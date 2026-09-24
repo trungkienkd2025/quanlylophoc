@@ -19,7 +19,82 @@ export type WeekExportData = {
   students: WeekExportStudent[];
 };
 
-/** Export toàn bộ học sinh từ tuần 1 đến tuần đang chọn, mỗi tuần ở một trang tính. */
+type ExportRow = {
+  STT: number;
+  "Mã học sinh": string;
+  "Họ và tên": string;
+  "Điểm danh": string;
+  "Đánh giá": string;
+  "Nhận xét": string;
+};
+
+function formatWeeklyValues(
+  weeks: WeekExportData[],
+  studentCode: string,
+  getValue: (student: WeekExportStudent) => string,
+) {
+  return weeks
+    .flatMap((weekData) => {
+      const student = weekData.students.find((item) => item.student_code === studentCode);
+      const value = student ? getValue(student).trim() : "";
+      return value ? [`${weekLabel(weekData.week)}: ${value}`] : [];
+    })
+    .join("\n");
+}
+
+function buildWeeklyRows(weekData: WeekExportData): ExportRow[] {
+  return sortStudents(weekData.students, "name").map((student, index) => ({
+    STT: index + 1,
+    "Mã học sinh": student.student_code,
+    "Họ và tên": student.full_name,
+    "Điểm danh": student.status ? weeklyAttendanceStatusLabel(student.status) : "",
+    "Đánh giá": student.level ?? "",
+    "Nhận xét": student.comment ?? "",
+  }));
+}
+
+function buildSummaryRows(weeks: WeekExportData[]): ExportRow[] {
+  const students = new Map<string, WeekExportStudent>();
+  for (const weekData of weeks) {
+    for (const student of weekData.students) {
+      students.set(student.student_code, student);
+    }
+  }
+
+  return sortStudents([...students.values()], "name").map((student, index) => ({
+    STT: index + 1,
+    "Mã học sinh": student.student_code,
+    "Họ và tên": student.full_name,
+    "Điểm danh": formatWeeklyValues(
+      weeks,
+      student.student_code,
+      (item) => (item.status ? weeklyAttendanceStatusLabel(item.status) : ""),
+    ),
+    "Đánh giá": formatWeeklyValues(weeks, student.student_code, (item) => item.level ?? ""),
+    "Nhận xét": formatWeeklyValues(weeks, student.student_code, (item) => item.comment ?? ""),
+  }));
+}
+
+function appendSheet(
+  workbook: XLSX.WorkBook,
+  name: string,
+  meta: string[][],
+  rows: ExportRow[],
+) {
+  const sheet = XLSX.utils.aoa_to_sheet([...meta, []]);
+  XLSX.utils.sheet_add_json(sheet, rows, { origin: -1 });
+  sheet["!cols"] = [
+    { wch: 6 },
+    { wch: 16 },
+    { wch: 28 },
+    { wch: 24 },
+    { wch: 32 },
+    { wch: 52 },
+  ];
+  XLSX.utils.book_append_sheet(workbook, sheet, name);
+}
+
+/** Export toàn bộ học sinh từ tuần 1 đến tuần đang chọn, gồm một trang tổng hợp và từng tuần. */
 export function downloadWeekReportExcel(input: {
   className: string;
   schoolYear: string;
@@ -27,27 +102,30 @@ export function downloadWeekReportExcel(input: {
   weeks: WeekExportData[];
 }) {
   const workbook = XLSX.utils.book_new();
-  for (const weekData of input.weeks) {
-    const sorted = sortStudents(weekData.students, "name");
-    const rows = sorted.map((student, index) => ({
-      STT: index + 1,
-      "Mã học sinh": student.student_code,
-      "Họ và tên": student.full_name,
-      "Điểm danh": student.status ? weeklyAttendanceStatusLabel(student.status) : "",
-      "Đánh giá": student.level ?? "",
-      "Nhận xét": student.comment ?? "",
-    }));
-    const meta = [
+  appendSheet(
+    workbook,
+    "Tổng hợp",
+    [
       ["Lớp", input.className],
       ["Năm học", input.schoolYear],
-      ["Tuần", weekLabel(weekData.week)],
-      ["Từ ngày", weekData.startDate ?? ""],
-      ["Đến ngày", weekData.endDate ?? ""],
-      [],
-    ];
-    const sheet = XLSX.utils.aoa_to_sheet(meta);
-    XLSX.utils.sheet_add_json(sheet, rows, { origin: -1 });
-    XLSX.utils.book_append_sheet(workbook, sheet, `Tuan_${weekData.week}`);
+      ["Tổng hợp đến", weekLabel(input.throughWeek)],
+    ],
+    buildSummaryRows(input.weeks),
+  );
+
+  for (const weekData of input.weeks) {
+    appendSheet(
+      workbook,
+      `Tuan_${weekData.week}`,
+      [
+        ["Lớp", input.className],
+        ["Năm học", input.schoolYear],
+        ["Tuần", weekLabel(weekData.week)],
+        ["Từ ngày", weekData.startDate ?? ""],
+        ["Đến ngày", weekData.endDate ?? ""],
+      ],
+      buildWeeklyRows(weekData),
+    );
   }
 
   const buffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
