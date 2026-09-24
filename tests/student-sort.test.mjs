@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { sortStudents } from "../src/lib/students/sort.ts";
+import { formatBirthYear } from "../src/lib/students/format.ts";
 
 const students = [
   { full_name: "Trần Ngọc Ý", student_code: "HS44" },
@@ -44,5 +45,11 @@ describe("student list sorting", () => {
       students.map((student) => student.student_code),
       originalOrder,
     );
+  });
+
+  it("shows only the year of birth in the student list", () => {
+    assert.equal(formatBirthYear("2018-09-05"), "2018");
+    assert.equal(formatBirthYear(null), "—");
+    assert.equal(formatBirthYear("không hợp lệ"), "—");
   });
 });

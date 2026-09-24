@@ -18,6 +18,13 @@ export function formatDateVi(isoDate: string | null): string {
   return `${day}/${month}/${year}`;
 }
 
+export function formatBirthYear(isoDate: string | null): string {
+  if (!isoDate) return "—";
+
+  const year = isoDate.split("-")[0];
+  return /^\d{4}$/.test(year) ? year : "—";
+}
+
 export function formatDateTimeVi(isoDateTime: string): string {
   const date = new Date(isoDateTime);
   if (Number.isNaN(date.getTime())) return isoDateTime;
