@@ -5,6 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import { aggregateStudentPointTotals } from "@/lib/points/format";
 import { getLocalDateString } from "@/lib/dates";
 import { createClient } from "@/lib/supabase/server";
+import type { StudentListItem } from "@/types/student";
 import { StudentManagement } from "./student-management";
 
 export default async function ClassStudentsPage({
@@ -28,20 +29,44 @@ export default async function ClassStudentsPage({
 
   if (!classItem) notFound();
 
-  const { data: students, error: studentsError } = await supabase
-    .from("students")
-    .select(
-      "id, student_code, full_name, date_of_birth, gender, notes, homework_status, updated_at",
-    )
-    .eq("class_id", classId)
-    .is("deleted_at", null)
-    .order("full_name")
-    .order("id");
+  const studentFields =
+    "id, student_code, full_name, date_of_birth, gender, notes, homework_status, updated_at";
+  const studentQuery = () =>
+    supabase
+      .from("students")
+      .select(studentFields)
+      .eq("class_id", classId)
+      .is("deleted_at", null)
+      .order("full_name")
+      .order("id");
 
-  const [
-    { data: pointEvents },
-    { data: attendanceRows },
-  ] = await Promise.all([
+  let { data: students, error: studentsError } = await studentQuery();
+  // Let existing projects continue to use the student list while their database
+  // is being upgraded with the homework-status column.
+  if (
+    studentsError &&
+    (studentsError.code === "42703" ||
+      (studentsError.code === "PGRST204" &&
+        studentsError.message.includes("homework_status")))
+  ) {
+    const fallback = await supabase
+      .from("students")
+      .select(
+        "id, student_code, full_name, date_of_birth, gender, notes, updated_at",
+      )
+      .eq("class_id", classId)
+      .is("deleted_at", null)
+      .order("full_name")
+      .order("id");
+
+    students = fallback.data?.map((student) => ({
+      ...student,
+      homework_status: null,
+    })) as StudentListItem[] | null;
+    studentsError = fallback.error;
+  }
+
+  const [{ data: pointEvents }, { data: attendanceRows }] = await Promise.all([
     supabase
       .from("student_points")
       .select("student_id, points")
@@ -94,7 +119,7 @@ export default async function ClassStudentsPage({
             initialAttendance={Object.fromEntries(
               (attendanceRows ?? []).map((row) => [row.student_id, row.status]),
             )}
-            students={students ?? []}
+            students={(students ?? []) as StudentListItem[]}
           />
         </Suspense>
       )}
