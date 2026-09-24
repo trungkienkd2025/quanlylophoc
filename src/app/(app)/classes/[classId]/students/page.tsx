@@ -28,7 +28,8 @@ export default async function ClassStudentsPage({
 
   if (!classItem) notFound();
 
-  const { data: students, error: studentsError } = await supabase
+  let supportsHomeworkStatus = true;
+  let { data: students, error: studentsError } = await supabase
     .from("students")
     .select(
       "id, student_code, full_name, date_of_birth, gender, notes, homework_status, updated_at",
@@ -37,6 +38,30 @@ export default async function ClassStudentsPage({
     .is("deleted_at", null)
     .order("full_name")
     .order("id");
+
+  // Existing Supabase projects may not have applied the optional homework-status
+  // migration yet. Do not let that newly added column hide the whole class list.
+  if (
+    studentsError?.code === "PGRST204" &&
+    /homework_status/i.test(studentsError.message ?? "")
+  ) {
+    supportsHomeworkStatus = false;
+    const fallback = await supabase
+      .from("students")
+      .select(
+        "id, student_code, full_name, date_of_birth, gender, notes, updated_at",
+      )
+      .eq("class_id", classId)
+      .is("deleted_at", null)
+      .order("full_name")
+      .order("id");
+
+    students = (fallback.data ?? []).map((student) => ({
+      ...student,
+      homework_status: null,
+    }));
+    studentsError = fallback.error;
+  }
 
   const [
     { data: pointEvents },
@@ -91,6 +116,7 @@ export default async function ClassStudentsPage({
             initialEditId={initialEditId}
             pointTotals={pointTotals}
             schoolYear={classItem.school_year}
+            supportsHomeworkStatus={supportsHomeworkStatus}
             initialAttendance={Object.fromEntries(
               (attendanceRows ?? []).map((row) => [row.student_id, row.status]),
             )}

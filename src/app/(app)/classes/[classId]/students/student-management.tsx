@@ -47,6 +47,7 @@ type StudentManagementProps = {
   schoolYear: string;
   initialAttendance: Record<string, AttendanceStatus>;
   students: StudentListItem[];
+  supportsHomeworkStatus: boolean;
 };
 
 type PanelMode = "none" | "create" | "edit" | "import";
@@ -157,6 +158,7 @@ export function StudentManagement({
   schoolYear,
   initialAttendance,
   students,
+  supportsHomeworkStatus,
 }: StudentManagementProps) {
   const router = useRouter();
   const initialEditStudent = initialEditId
@@ -537,7 +539,9 @@ export function StudentManagement({
                   <th className="px-3 py-2 text-xs font-semibold">Điểm</th>
                   <th className="px-3 py-2 text-xs font-semibold">Thao tác</th>
                   <th className="px-3 py-2 text-xs font-semibold">Chức vụ</th>
-                  <th className="px-3 py-2 text-xs font-semibold">Nộp bài</th>
+                  {supportsHomeworkStatus && (
+                    <th className="px-3 py-2 text-xs font-semibold">Nộp bài</th>
+                  )}
                 </tr>
               </thead>
               <tbody>
@@ -659,10 +663,11 @@ export function StudentManagement({
                         )}
                       </div>
                     </td>
-                    <td className="px-3 py-2">
-                      <div className="relative">
-                        <Button
-                          aria-label={`Trạng thái nộp bài ${student.full_name}`}
+                    {supportsHomeworkStatus && (
+                      <td className="px-3 py-2">
+                        <div className="relative">
+                          <Button
+                            aria-label={`Trạng thái nộp bài ${student.full_name}`}
                           aria-expanded={homeworkMenuId === student.id}
                           aria-haspopup="menu"
                           className="min-w-32"
@@ -709,8 +714,9 @@ export function StudentManagement({
                             </button>
                           </div>
                         )}
-                      </div>
-                    </td>
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -829,7 +835,8 @@ export function StudentManagement({
                       </div>
                     )}
                   </div>
-                  <div className="relative">
+                  {supportsHomeworkStatus && (
+                    <div className="relative">
                     <Button
                       aria-label={`Trạng thái nộp bài ${student.full_name}`}
                       aria-expanded={homeworkMenuId === student.id}
@@ -878,7 +885,8 @@ export function StudentManagement({
                         </button>
                       </div>
                     )}
-                  </div>
+                    </div>
+                  )}
                 </div>
                 <StudentPointsControls
                   classId={classId}
