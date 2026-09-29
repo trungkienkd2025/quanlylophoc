@@ -397,28 +397,58 @@ export function AppShell({
                         {year.classes.length === 0 ? (
                           <p className="py-1 text-xs text-muted-foreground font-normal">Chưa có lớp</p>
                         ) : (
-                          <select
-                            aria-label={`Chọn lớp năm học ${year.name}`}
-                            className={cn(
-                              "h-9 w-full rounded-lg border bg-background px-2 text-xs font-bold outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20",
-                              activeClassInYear && "border-primary text-primary",
-                            )}
-                            onChange={(event) => {
-                              const classId = event.target.value;
-                              if (classId) {
-                                router.push(`/classes/${classId}`);
-                                setIsMobileYearsOpen(false);
-                              }
-                            }}
-                            value={activeClassInYear?.id ?? ""}
-                          >
-                            <option value="">Chọn lớp</option>
-                            {year.classes.map((classItem) => (
-                              <option key={classItem.id} value={classItem.id}>
-                                {classItem.name} · Khối {classItem.grade}
-                              </option>
-                            ))}
-                          </select>
+                          <>
+                            <select
+                              aria-label={`Chọn lớp năm học ${year.name}`}
+                              className={cn(
+                                "h-9 w-full rounded-lg border bg-background px-2 text-xs font-bold outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20",
+                                activeClassInYear && "border-primary text-primary",
+                              )}
+                              onChange={(event) => {
+                                const classId = event.target.value;
+                                if (classId) {
+                                  router.push(`/classes/${classId}`);
+                                  setIsMobileYearsOpen(false);
+                                }
+                              }}
+                              value={activeClassInYear?.id ?? ""}
+                            >
+                              <option value="">Chọn lớp</option>
+                              {year.classes.map((classItem) => (
+                                <option key={classItem.id} value={classItem.id}>
+                                  {classItem.name} · Khối {classItem.grade}
+                                </option>
+                              ))}
+                            </select>
+
+                            {activeClassInYear ? (
+                              <div className="mt-2 space-y-0.5 border-l border-sky-200 pl-2">
+                                {classQuickLinks(activeClassInYear.id).map(
+                                  ({ href, icon: Icon, label }) => {
+                                    const isActive =
+                                      href === `/classes/${activeClassInYear.id}`
+                                        ? pathname === href
+                                        : pathname.startsWith(href);
+                                    return (
+                                      <Link
+                                        aria-current={isActive ? "page" : undefined}
+                                        className={cn(
+                                          "flex h-9 items-center gap-2 rounded-md px-2 text-sm font-semibold text-slate-600 hover:bg-sky-50 hover:text-primary",
+                                          isActive && "bg-sky-50 text-primary",
+                                        )}
+                                        href={href}
+                                        key={label}
+                                        onClick={() => setIsMobileYearsOpen(false)}
+                                      >
+                                        <Icon aria-hidden="true" className="size-4" />
+                                        {label}
+                                      </Link>
+                                    );
+                                  },
+                                )}
+                              </div>
+                            ) : null}
+                          </>
                         )}
                       </div>
                     );
