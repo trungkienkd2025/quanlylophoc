@@ -36,7 +36,9 @@ export default async function ClassDetailPage({
 
   const { data: students } = await supabase
     .from("students")
-    .select("id, full_name, student_code")
+    .select(
+      "id, full_name, student_code, date_of_birth, gender, notes, updated_at",
+    )
     .eq("class_id", classId)
     .is("deleted_at", null)
     .order("full_name");
