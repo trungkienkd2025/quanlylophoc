@@ -26,7 +26,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
-  formatBirthYear,
+  formatDateVi,
   genderLabel,
 } from "@/lib/students/format";
 import { downloadStudentTemplate } from "@/lib/students/excel";
@@ -66,6 +66,14 @@ function sanitizeFilenamePart(value: string) {
     .replace(/^_+|_+$/g, "");
 }
 
+function displayGender(gender: StudentListItem["gender"]) {
+  return gender === "UNSPECIFIED" ? "" : genderLabel(gender);
+}
+
+function displayBirthDate(dateOfBirth: string | null) {
+  return dateOfBirth ? formatDateVi(dateOfBirth) : "";
+}
+
 function saveExcelFile(workbook: XLSX.WorkBook, fileName: string) {
   const buffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
   const blob = new Blob([buffer], {
@@ -86,22 +94,24 @@ export function exportStudentsToExcel(input: {
       "STT",
       "Họ và tên",
       "Giới tính",
-      "Năm sinh",
+      "Ngày tháng năm sinh",
+      "Dân tộc",
       "Mã học sinh",
     ],
     ...sortedStudents.map((student, index) => [
       index + 1,
       student.full_name,
-      genderLabel(student.gender),
-      formatBirthYear(student.date_of_birth),
+      displayGender(student.gender),
+      displayBirthDate(student.date_of_birth),
+      "",
       student.student_code,
     ]),
     [],
-    [`Sĩ số: ${sortedStudents.length} học sinh`, "", "", "", ""],
+    [`Sĩ số: ${sortedStudents.length} học sinh`, "", "", "", "", ""],
   ];
   const workbook = XLSX.utils.book_new();
   const sheet = XLSX.utils.aoa_to_sheet(data);
-  const range = XLSX.utils.decode_range(sheet["!ref"] ?? "A1:E1");
+  const range = XLSX.utils.decode_range(sheet["!ref"] ?? "A1:F1");
 
   for (let row = range.s.r; row <= range.e.r; row += 1) {
     for (let col = range.s.c; col <= range.e.c; col += 1) {
@@ -116,7 +126,7 @@ export function exportStudentsToExcel(input: {
             : undefined,
         alignment: {
           horizontal:
-            row === 0 || [0, 2, 3, 4].includes(col) ? "center" : "left",
+            row === 0 || [0, 2, 3, 4, 5].includes(col) ? "center" : "left",
           vertical: "center",
         },
         border:
@@ -136,7 +146,8 @@ export function exportStudentsToExcel(input: {
     { wch: 6 },
     { wch: 35 },
     { wch: 15 },
-    { wch: 12 },
+    { wch: 20 },
+    { wch: 15 },
     { wch: 15 },
   ];
   XLSX.utils.book_append_sheet(workbook, sheet, "Danh sách học sinh");
@@ -539,7 +550,8 @@ export function StudentManagement({
                   <th className="px-3 py-2 text-center text-xs font-semibold">STT</th>
                   <th className="px-3 py-2 text-xs font-semibold">Họ tên</th>
                   <th className="px-3 py-2 text-xs font-semibold">Giới tính</th>
-                  <th className="px-3 py-2 text-xs font-semibold">Năm sinh</th>
+                  <th className="px-3 py-2 text-xs font-semibold">Ngày tháng năm sinh</th>
+                  <th className="px-3 py-2 text-xs font-semibold">Dân tộc</th>
                   <th className="px-3 py-2 text-xs font-semibold">Mã HS</th>
                   <th className="px-3 py-2 text-xs font-semibold">Điểm</th>
                   <th className="px-3 py-2 text-xs font-semibold">Thao tác</th>
@@ -563,10 +575,11 @@ export function StudentManagement({
                         {student.full_name}
                       </Link>
                     </td>
-                    <td className="px-3 py-2">{genderLabel(student.gender)}</td>
+                    <td className="px-3 py-2">{displayGender(student.gender)}</td>
                     <td className="px-3 py-2 tabular-nums">
-                      {formatBirthYear(student.date_of_birth)}
+                      {displayBirthDate(student.date_of_birth)}
                     </td>
+                    <td className="px-3 py-2">&nbsp;</td>
                     <td className="px-3 py-2">{student.student_code}</td>
                     <td className="px-3 py-2 font-medium">
                       {formatPointsTotal(pointTotals[student.id] ?? 0)}
@@ -743,8 +756,10 @@ export function StudentManagement({
                       {student.full_name}
                     </Link>
                     <p className="text-xs text-muted-foreground">
-                      STT {index + 1} · {genderLabel(student.gender)} · Năm sinh{" "}
-                      {formatBirthYear(student.date_of_birth)}
+                      STT {index + 1}
+                      {displayGender(student.gender) && ` · ${displayGender(student.gender)}`}
+                      {displayBirthDate(student.date_of_birth) &&
+                        ` · Ngày sinh ${displayBirthDate(student.date_of_birth)}`}
                     </p>
                   </div>
                 </div>
