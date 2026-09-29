@@ -13,10 +13,14 @@ import { Label } from "@/components/ui/label";
 import { GENDER_OPTIONS } from "@/lib/students/format";
 import type { StudentGender, StudentListItem } from "@/types/student";
 
+type EditableStudent = Omit<StudentListItem, "homework_status"> & {
+  updated_at?: string;
+};
+
 type StudentFormPanelProps = {
   classId: string;
   mode: "create" | "edit";
-  student?: StudentListItem & { updated_at?: string };
+  student?: EditableStudent;
   onClose: () => void;
   onSuccess?: () => void;
 };
@@ -42,7 +46,7 @@ export function StudentFormPanel({
     if (state.success) {
       router.refresh();
       onSuccess?.();
-      if (mode === "create") onClose();
+      onClose();
     }
   }, [state.success, onSuccess, onClose, mode, router]);
 

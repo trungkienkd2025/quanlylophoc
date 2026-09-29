@@ -14,8 +14,17 @@ import { selectWeekForDate, TOTAL_WEEKS, weekLabel, weekNumbers } from "@/lib/we
 import type { WeekExportData } from "@/lib/weeks/export-excel";
 import { cn } from "@/lib/utils";
 import type { AttendanceStatus } from "@/types/attendance";
+import type { StudentGender } from "@/types/student";
 
-type Student = { id: string; full_name: string; student_code: string };
+type Student = {
+  id: string;
+  full_name: string;
+  student_code: string;
+  date_of_birth: string | null;
+  gender: StudentGender;
+  notes: string;
+  updated_at: string;
+};
 type AttendanceRow = {
   student_id: string;
   week_number: number;

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Pencil, Trash2 } from "lucide-react";
 import { softDeleteStudent } from "@/app/actions/students";
 import { saveWeekBoard } from "@/app/actions/week-board";
+import { StudentFormPanel } from "@/app/(app)/classes/[classId]/students/student-form-panel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -20,8 +21,17 @@ import { downloadWeekReportExcel, type WeekExportData } from "@/lib/weeks/export
 import { TOTAL_WEEKS } from "@/lib/weeks";
 import { cn } from "@/lib/utils";
 import type { AttendanceStatus } from "@/types/attendance";
+import type { StudentGender } from "@/types/student";
 
-type Student = { id: string; full_name: string; student_code: string };
+type Student = {
+  id: string;
+  full_name: string;
+  student_code: string;
+  date_of_birth: string | null;
+  gender: StudentGender;
+  notes: string;
+  updated_at: string;
+};
 type AttendanceRow = { student_id: string; status: AttendanceStatus; note: string };
 type EvaluationRow = { student_id: string; level: string; comment: string };
 
@@ -118,6 +128,7 @@ export function WeekBoard({
   const [isSaving, startTransition] = useTransition();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, startDeleteTransition] = useTransition();
+  const [isStudentFormOpen, setIsStudentFormOpen] = useState(false);
 
   const filteredStudents = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -213,6 +224,7 @@ export function WeekBoard({
       const nextStudent = sortedStudents.find((student) => student.id !== selected.id);
       setSelectedId(nextStudent?.id ?? "");
       setPickerOpen(false);
+      setIsStudentFormOpen(false);
       setIsDeleteDialogOpen(false);
       setError(null);
       setMessage(result.success ?? "Đã đưa học sinh ra khỏi danh sách lớp.");
@@ -312,12 +324,11 @@ export function WeekBoard({
                       <span className="text-sm text-muted-foreground">({selected.student_code})</span>
                     </p>
                     <Button
+                      aria-expanded={isStudentFormOpen}
                       aria-label={`Sửa học sinh ${selected.full_name}`}
-                      nativeButton={false}
-                      render={
-                        <Link href={`/classes/${classId}/students?edit=${selected.id}`} />
-                      }
+                      onClick={() => setIsStudentFormOpen((open) => !open)}
                       size="xs"
+                      type="button"
                       variant="ghost"
                     >
                       <Pencil className="size-3.5" />
@@ -343,6 +354,20 @@ export function WeekBoard({
                     {selectedState.status ? weeklyAttendanceStatusLabel(selectedState.status) : "Chưa điểm danh"}
                   </span>
                 </div>
+
+                {isStudentFormOpen ? (
+                  <StudentFormPanel
+                    classId={classId}
+                    key={selected.id}
+                    mode="edit"
+                    onClose={() => setIsStudentFormOpen(false)}
+                    onSuccess={() => {
+                      setIsStudentFormOpen(false);
+                      setMessage("Đã lưu thông tin học sinh.");
+                    }}
+                    student={selected}
+                  />
+                ) : null}
 
                 <div>
                   <p className="mb-2 text-sm font-semibold">Điểm danh</p>
