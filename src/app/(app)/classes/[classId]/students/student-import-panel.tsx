@@ -83,7 +83,7 @@ export function StudentImportPanel({ classId, onClose, onSuccess }: StudentImpor
   return (
     <div className="rounded-2xl border bg-card p-5 shadow-sm">
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-lg font-bold">Import Excel</h2>
+        <h2 className="text-lg font-bold">Nhập danh sách học sinh</h2>
         <Button onClick={onClose} type="button" variant="ghost">
           Đóng
         </Button>
@@ -97,7 +97,7 @@ export function StudentImportPanel({ classId, onClose, onSuccess }: StudentImpor
           variant="outline"
         >
           <Download className="size-4" />
-          Tải file mẫu
+          Xuất file mẫu
         </Button>
         <Button
           className="h-11 flex-1"
@@ -106,7 +106,7 @@ export function StudentImportPanel({ classId, onClose, onSuccess }: StudentImpor
           type="button"
         >
           <Upload className="size-4" />
-          {isParsing ? "Đang đọc file…" : "Chọn file Excel"}
+          {isParsing ? "Đang đọc file…" : "Nhập file mẫu"}
         </Button>
         <input
           accept=".xlsx,.xls"
@@ -118,7 +118,7 @@ export function StudentImportPanel({ classId, onClose, onSuccess }: StudentImpor
       </div>
 
       <p className="mt-3 text-sm text-muted-foreground">
-        Cột bắt buộc: <code>student_code</code>, <code>full_name</code>. Tối đa{" "}
+        Cột bắt buộc: Mã học sinh, Họ và tên. Tối đa{" "}
         {EXCEL_IMPORT_LIMITS.maxRows} học sinh, file tối đa 2 MB (.xlsx hoặc .xls).
       </p>
 
