@@ -424,7 +424,7 @@ export function StudentManagement({
               variant="outline"
             >
               <FileSpreadsheet className="size-4" />
-              Import file Excel
+              Nhập file mẫu
             </Button>
             <Button
               className="h-9 whitespace-nowrap"
@@ -433,7 +433,7 @@ export function StudentManagement({
               variant="outline"
             >
               <Download className="size-4" />
-              Tải file mẫu
+              Xuất file mẫu
             </Button>
             <Button
               className="h-9 whitespace-nowrap"

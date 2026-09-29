@@ -2,31 +2,21 @@ import * as XLSX from "xlsx";
 import type { ExcelStudentRow } from "@/types/student";
 import { EXCEL_IMPORT_LIMITS, validateImportRowCount } from "@/lib/students/import-limits";
 
-const TEMPLATE_HEADERS = ["student_code", "full_name", "date_of_birth", "gender", "notes"] as const;
+const TEMPLATE_HEADERS = [
+  "Mã học sinh",
+  "Họ và tên",
+  "Ngày sinh",
+  "Giới tính",
+  "Ghi chú",
+] as const;
 
-const TEMPLATE_EXAMPLES = [
-  {
-    student_code: "HS001",
-    full_name: "Nguyễn Văn Demo",
-    date_of_birth: "2015-03-15",
-    gender: "Nam",
-    notes: "Ví dụ ghi chú",
-  },
-  {
-    student_code: "HS002",
-    full_name: "Trần Thị Mẫu",
-    date_of_birth: "2015-07-20",
-    gender: "Nữ",
-    notes: "",
-  },
-  {
-    student_code: "HS003",
-    full_name: "Lê Văn Test",
-    date_of_birth: "",
-    gender: "",
-    notes: "Không bắt buộc ngày sinh",
-  },
-];
+const HEADER_ALIASES: Record<string, string[]> = {
+  student_code: ["student_code", "mã_học_sinh", "ma_hoc_sinh", "mã_hs", "ma_hs"],
+  full_name: ["full_name", "họ_và_tên", "ho_va_ten", "họ_tên", "ho_ten"],
+  date_of_birth: ["date_of_birth", "ngày_sinh", "ngay_sinh"],
+  gender: ["gender", "giới_tính", "gioi_tinh"],
+  notes: ["notes", "ghi_chú", "ghi_chu"],
+};
 
 function normalizeHeader(value: unknown): string {
   return String(value ?? "")
@@ -47,9 +37,28 @@ function cellToString(value: unknown): string {
 }
 
 export function buildStudentTemplateWorkbook(): ArrayBuffer {
-  const worksheet = XLSX.utils.json_to_sheet(TEMPLATE_EXAMPLES, { header: [...TEMPLATE_HEADERS] });
   const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Hoc_sinh");
+  const worksheet = XLSX.utils.aoa_to_sheet([[...TEMPLATE_HEADERS]]);
+  worksheet["!cols"] = [
+    { wch: 18 },
+    { wch: 32 },
+    { wch: 16 },
+    { wch: 14 },
+    { wch: 40 },
+  ];
+
+  const guide = XLSX.utils.aoa_to_sheet([
+    ["HƯỚNG DẪN NHẬP DANH SÁCH HỌC SINH"],
+    ["1. Điền thông tin học sinh vào trang tính Danh sách học sinh."],
+    ["2. Mã học sinh và Họ và tên là bắt buộc."],
+    ["3. Ngày sinh dùng định dạng YYYY-MM-DD hoặc DD/MM/YYYY."],
+    ["4. Giới tính: Nam, Nữ, Khác hoặc để trống."],
+    ["5. Không đổi tên các cột ở dòng đầu tiên."],
+  ]);
+  guide["!cols"] = [{ wch: 90 }];
+
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Danh sách học sinh");
+  XLSX.utils.book_append_sheet(workbook, guide, "Hướng dẫn");
   return XLSX.write(workbook, { bookType: "xlsx", type: "array" });
 }
 
@@ -97,16 +106,18 @@ export function parseStudentExcelFile(buffer: ArrayBuffer): ExcelStudentRow[] {
   }
 
   const headerRow = matrix[0].map(normalizeHeader);
+  const findColumn = (field: keyof typeof HEADER_ALIASES) =>
+    headerRow.findIndex((header) => HEADER_ALIASES[field].includes(header));
   const columnIndex = {
-    studentCode: headerRow.indexOf("student_code"),
-    fullName: headerRow.indexOf("full_name"),
-    dateOfBirth: headerRow.indexOf("date_of_birth"),
-    gender: headerRow.indexOf("gender"),
-    notes: headerRow.indexOf("notes"),
+    studentCode: findColumn("student_code"),
+    fullName: findColumn("full_name"),
+    dateOfBirth: findColumn("date_of_birth"),
+    gender: findColumn("gender"),
+    notes: findColumn("notes"),
   };
 
   if (columnIndex.studentCode === -1 || columnIndex.fullName === -1) {
-    throw new Error("File thiếu cột bắt buộc: student_code, full_name.");
+    throw new Error("File thiếu cột bắt buộc: Mã học sinh, Họ và tên.");
   }
 
   const rows: ExcelStudentRow[] = [];
