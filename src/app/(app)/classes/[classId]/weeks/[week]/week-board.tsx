@@ -3,6 +3,8 @@
 import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Pencil, Trash2 } from "lucide-react";
+import { softDeleteStudent } from "@/app/actions/students";
 import { saveWeekBoard } from "@/app/actions/week-board";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -114,6 +116,8 @@ export function WeekBoard({
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, startTransition] = useTransition();
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeleting, startDeleteTransition] = useTransition();
 
   const filteredStudents = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -193,6 +197,26 @@ export function WeekBoard({
       schoolYear,
       throughWeek: week,
       weeks,
+    });
+  }
+
+  function handleDeleteSelectedStudent() {
+    if (!selected) return;
+
+    startDeleteTransition(async () => {
+      const result = await softDeleteStudent(classId, selected.id);
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+
+      const nextStudent = sortedStudents.find((student) => student.id !== selected.id);
+      setSelectedId(nextStudent?.id ?? "");
+      setPickerOpen(false);
+      setIsDeleteDialogOpen(false);
+      setError(null);
+      setMessage(result.success ?? "Đã đưa học sinh ra khỏi danh sách lớp.");
+      router.refresh();
     });
   }
 
@@ -282,11 +306,33 @@ export function WeekBoard({
             {selected ? (
               <>
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
+                  <div className="flex min-w-0 flex-wrap items-center gap-1.5">
                     <p className="font-semibold">
                       {selected.full_name}{" "}
                       <span className="text-sm text-muted-foreground">({selected.student_code})</span>
                     </p>
+                    <Button
+                      aria-label={`Sửa học sinh ${selected.full_name}`}
+                      nativeButton={false}
+                      render={
+                        <Link href={`/classes/${classId}/students?edit=${selected.id}`} />
+                      }
+                      size="xs"
+                      variant="ghost"
+                    >
+                      <Pencil className="size-3.5" />
+                      Sửa
+                    </Button>
+                    <Button
+                      aria-label={`Xóa học sinh ${selected.full_name}`}
+                      onClick={() => setIsDeleteDialogOpen(true)}
+                      size="xs"
+                      type="button"
+                      variant="destructive"
+                    >
+                      <Trash2 className="size-3.5" />
+                      Xóa
+                    </Button>
                   </div>
                   <span
                     className={cn(
@@ -383,6 +429,46 @@ export function WeekBoard({
             Tuần sau →
           </Button>
         </div>
+      ) : null}
+
+      {isDeleteDialogOpen && selected ? (
+        <dialog
+          aria-labelledby="delete-student-title"
+          aria-modal="true"
+          className="fixed inset-0 z-50 m-0 flex h-full max-h-none w-full max-w-none items-center justify-center bg-black/40 p-4 backdrop:bg-black/40"
+          open
+        >
+          <div className="w-full max-w-md rounded-2xl bg-card p-5 shadow-lg">
+            <h3 className="text-lg font-bold" id="delete-student-title">
+              Xác nhận xóa học sinh
+            </h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Bạn có chắc muốn đưa học sinh này ra khỏi danh sách lớp?
+            </p>
+            <p className="mt-2 font-medium">{selected.full_name}</p>
+            <div className="mt-5 flex flex-col-reverse gap-3 sm:flex-row">
+              <Button
+                className="h-11"
+                disabled={isDeleting}
+                onClick={() => setIsDeleteDialogOpen(false)}
+                type="button"
+                variant="outline"
+              >
+                Huỷ
+              </Button>
+              <Button
+                className="h-11"
+                disabled={isDeleting}
+                onClick={handleDeleteSelectedStudent}
+                type="button"
+                variant="destructive"
+              >
+                <Trash2 className="size-4" />
+                {isDeleting ? "Đang xóa…" : "Xóa khỏi lớp"}
+              </Button>
+            </div>
+          </div>
+        </dialog>
       ) : null}
     </div>
   );
