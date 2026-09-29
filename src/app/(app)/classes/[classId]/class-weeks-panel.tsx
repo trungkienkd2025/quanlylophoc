@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { UserPlus } from "lucide-react";
+import { Download, UserPlus } from "lucide-react";
 import { WeekBoard } from "@/app/(app)/classes/[classId]/weeks/[week]/week-board";
 import { StudentFormPanel } from "@/app/(app)/classes/[classId]/students/student-form-panel";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toWeeklyAttendanceStatus } from "@/lib/attendance/format";
 import { DEFAULT_EVALUATION_LEVELS } from "@/lib/evaluations/levels";
+import { exportStudentsToExcel } from "@/lib/students/excel";
 import { selectWeekForDate, TOTAL_WEEKS, weekLabel, weekNumbers } from "@/lib/weeks";
 import type { WeekExportData } from "@/lib/weeks/export-excel";
 import { cn } from "@/lib/utils";
@@ -299,17 +300,29 @@ export function ClassWeeksPanel({
               Thêm học sinh mới để điểm danh và đánh giá ngay trong tuần này.
             </p>
           </div>
-          <Button
-            aria-expanded={isStudentFormOpen}
-            onClick={() => {
-              setIsStudentFormOpen((open) => !open);
-              setStudentFeedback(null);
-            }}
-            type="button"
-          >
-            <UserPlus className="size-4" />
-            {isStudentFormOpen ? "Đóng biểu mẫu" : "Thêm học sinh"}
-          </Button>
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+            <Button
+              onClick={() =>
+                exportStudentsToExcel({ className, schoolYear, students })
+              }
+              type="button"
+              variant="outline"
+            >
+              <Download className="size-4" />
+              Xuất Excel
+            </Button>
+            <Button
+              aria-expanded={isStudentFormOpen}
+              onClick={() => {
+                setIsStudentFormOpen((open) => !open);
+                setStudentFeedback(null);
+              }}
+              type="button"
+            >
+              <UserPlus className="size-4" />
+              {isStudentFormOpen ? "Đóng biểu mẫu" : "Thêm học sinh"}
+            </Button>
+          </div>
         </div>
 
         {studentFeedback ? (
