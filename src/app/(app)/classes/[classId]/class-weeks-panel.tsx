@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { UserPlus } from "lucide-react";
 import { WeekBoard } from "@/app/(app)/classes/[classId]/weeks/[week]/week-board";
+import { StudentFormPanel } from "@/app/(app)/classes/[classId]/students/student-form-panel";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -56,6 +59,8 @@ export function ClassWeeksPanel({
 }) {
   const [selectedWeek, setSelectedWeek] = useState<number>(initialWeek);
   const [dateOverrides, setDateOverrides] = useState<Record<number, { start_date: string; end_date: string }>>({});
+  const [isStudentFormOpen, setIsStudentFormOpen] = useState(false);
+  const [studentFeedback, setStudentFeedback] = useState<string | null>(null);
 
   useEffect(() => {
     if (!autoSelectCurrentWeek) return;
@@ -275,6 +280,45 @@ export function ClassWeeksPanel({
             )}
           </CardContent>
         </Card>
+      </section>
+
+      <section aria-labelledby="add-student-heading" className="rounded-xl border bg-card p-3 sm:p-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="font-bold" id="add-student-heading">Danh sách học sinh</h2>
+            <p className="text-sm text-muted-foreground">
+              Thêm học sinh mới để điểm danh và đánh giá ngay trong tuần này.
+            </p>
+          </div>
+          <Button
+            aria-expanded={isStudentFormOpen}
+            onClick={() => {
+              setIsStudentFormOpen((open) => !open);
+              setStudentFeedback(null);
+            }}
+            type="button"
+          >
+            <UserPlus className="size-4" />
+            {isStudentFormOpen ? "Đóng biểu mẫu" : "Thêm học sinh"}
+          </Button>
+        </div>
+
+        {studentFeedback ? (
+          <p aria-live="polite" className="mt-3 text-sm text-emerald-600">
+            {studentFeedback}
+          </p>
+        ) : null}
+
+        {isStudentFormOpen ? (
+          <div className="mt-4">
+            <StudentFormPanel
+              classId={classId}
+              mode="create"
+              onClose={() => setIsStudentFormOpen(false)}
+              onSuccess={() => setStudentFeedback("Đã thêm học sinh vào lớp.")}
+            />
+          </div>
+        ) : null}
       </section>
 
       <div className="rounded-xl border bg-background p-3 sm:p-4">
