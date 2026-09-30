@@ -38,4 +38,6 @@ export type ExcelStudentRow = {
 export type ExcelRowValidation = ExcelStudentRow & {
   errors: string[];
   isValid: boolean;
+  /** A matching active student already belongs to this class. */
+  alreadyInClass?: boolean;
 };

@@ -119,7 +119,7 @@ export function StudentImportPanel({ classId, onClose, onSuccess }: StudentImpor
 
       <p className="mt-3 text-sm text-muted-foreground">
         Cột bắt buộc: Mã học sinh, Họ và tên. Tối đa{" "}
-        {EXCEL_IMPORT_LIMITS.maxRows} học sinh, file tối đa 2 MB (.xlsx hoặc .xls).
+        {EXCEL_IMPORT_LIMITS.maxRows} học sinh, file tối đa 2 MB (.xlsx hoặc .xls). Bạn có thể dùng file đã xuất từ lớp này để thêm học sinh mới.
       </p>
 
       {fileError && (
@@ -162,7 +162,9 @@ export function StudentImportPanel({ classId, onClose, onSuccess }: StudentImpor
                         {gender ? genderLabel(gender) : row.gender || "—"}
                       </td>
                       <td className="px-3 py-2">
-                        {row.isValid ? (
+                        {row.isValid && row.alreadyInClass ? (
+                          <span className="font-medium text-muted-foreground">Đã có trong lớp</span>
+                        ) : row.isValid ? (
                           <span className="font-medium text-emerald-600">✓ Hợp lệ</span>
                         ) : (
                           <div className="space-y-1">
@@ -188,7 +190,7 @@ export function StudentImportPanel({ classId, onClose, onSuccess }: StudentImpor
             </p>
           ) : (
             <p className="mt-3 text-sm text-emerald-600">
-              Tất cả {rows.length} dòng hợp lệ. Bạn có thể xác nhận nhập.
+              Tất cả {rows.length} dòng hợp lệ. Học sinh đã có trong lớp sẽ được giữ nguyên; chỉ thêm học sinh mới.
             </p>
           )}
 

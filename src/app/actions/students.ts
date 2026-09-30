@@ -250,7 +250,7 @@ const importRowSchema = z.object({
 export async function importStudents(
   classId: string,
   rows: ExcelRowValidation[],
-): Promise<ActionState & { importedCount?: number }> {
+): Promise<ActionState & { importedCount?: number; skippedCount?: number }> {
   const access = await verifyClassAccess(classId);
   if (!access.ok) return { error: access.error };
 
@@ -268,7 +268,34 @@ export async function importStudents(
     return { error: "File có lỗi. Vui lòng sửa file Excel và tải lại." };
   }
 
-  const payload = rows.map((row) => {
+  // Exported class lists already include students currently in the class.
+  // Look up active codes again on the server so re-uploading a list only adds
+  // new rows, even if the browser preview is stale or manipulated.
+  const { data: existingStudents, error: existingStudentsError } = await access.supabase
+    .from("students")
+    .select("student_code")
+    .eq("class_id", access.classId)
+    .is("deleted_at", null);
+
+  if (existingStudentsError) {
+    return { error: "Chưa thể kiểm tra danh sách học sinh. Vui lòng thử lại." };
+  }
+
+  const existingCodes = new Set(
+    (existingStudents ?? []).map((student) => student.student_code.trim().toLowerCase()),
+  );
+  const newRows = rows.filter((row) => !existingCodes.has(row.studentCode.trim().toLowerCase()));
+  const skippedCount = rows.length - newRows.length;
+
+  if (newRows.length === 0) {
+    return {
+      success: "Danh sách này không có học sinh mới để thêm.",
+      importedCount: 0,
+      skippedCount,
+    };
+  }
+
+  const payload = newRows.map((row) => {
     const insertRow = toStudentInsertPayload(row, access.classId);
     return importRowSchema.parse({
       student_code: insertRow.student_code,
@@ -293,13 +320,14 @@ export async function importStudents(
     return { error: "Chưa thể nhập danh sách. Vui lòng thử lại." };
   }
 
-  const importedCount = typeof data === "number" ? data : rows.length;
+  const importedCount = typeof data === "number" ? data : newRows.length;
 
   revalidatePath(`/classes/${access.classId}/students`);
   revalidatePath(`/classes/${access.classId}`);
   revalidatePath("/dashboard");
   revalidatePath("/class-management");
-  return { success: `Đã thêm ${importedCount} học sinh.`, importedCount };
+  const skippedMessage = skippedCount > 0 ? ` Đã giữ nguyên ${skippedCount} học sinh có sẵn.` : "";
+  return { success: `Đã thêm ${importedCount} học sinh.${skippedMessage}`, importedCount, skippedCount };
 }
 
 export async function getExistingStudentCodes(

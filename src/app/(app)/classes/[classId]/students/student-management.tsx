@@ -326,7 +326,7 @@ export function StudentManagement({
               variant="outline"
             >
               <FileSpreadsheet className="size-4" />
-              Nhập file mẫu
+              Nhập Excel
             </Button>
             <Button
               className="h-9 whitespace-nowrap"
