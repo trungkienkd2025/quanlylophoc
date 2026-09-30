@@ -104,9 +104,6 @@ export function validateExcelRows(
         seenInFile.set(normalizedCode, row.rowNumber);
       }
 
-      if (existingCodes.has(normalizedCode)) {
-        errors.push("Mã học sinh đã tồn tại trong lớp.");
-      }
     }
 
     if (!name) {
@@ -144,6 +141,7 @@ export function validateExcelRows(
       notes: row.notes.trim(),
       errors,
       isValid: errors.length === 0,
+      alreadyInClass: existingCodes.has(normalizedCode),
     };
   });
 }

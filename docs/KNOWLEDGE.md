@@ -214,7 +214,7 @@ Chi tiết policy/RPC: [architecture.md](./architecture.md).
 
 - Tạo nhanh: chỉ bắt buộc mã + họ tên (các field khác optional).
 - List: search theo tên / mã; soft delete thay vì xóa cứng.
-- Import Excel: parse → validate ALL → preview → confirm → transaction RPC. Không import nửa chừng im lặng.
+- Import Excel: parse → validate ALL → preview → confirm → transaction RPC. Không import nửa chừng im lặng. File xuất danh sách có thể nhập lại sau khi thêm dòng: học sinh có mã đã tồn tại được giữ nguyên, chỉ thêm mã mới.
 - Giới hạn import: xem `src/lib/students/import-limits.ts` (ví dụ ~200 hàng, ~2MB).
 - Cột tối thiểu: `student_code`, `full_name`.
 

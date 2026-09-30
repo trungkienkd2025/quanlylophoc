@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Download, UserPlus } from "lucide-react";
+import { Download, FileSpreadsheet, UserPlus } from "lucide-react";
 import { WeekBoard } from "@/app/(app)/classes/[classId]/weeks/[week]/week-board";
 import { StudentFormPanel } from "@/app/(app)/classes/[classId]/students/student-form-panel";
+import { StudentImportPanel } from "@/app/(app)/classes/[classId]/students/student-import-panel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -70,6 +71,7 @@ export function ClassWeeksPanel({
   const [selectedWeek, setSelectedWeek] = useState<number>(initialWeek);
   const [dateOverrides, setDateOverrides] = useState<Record<number, { start_date: string; end_date: string }>>({});
   const [isStudentFormOpen, setIsStudentFormOpen] = useState(false);
+  const [isStudentImportOpen, setIsStudentImportOpen] = useState(false);
   const [studentFeedback, setStudentFeedback] = useState<string | null>(null);
 
   useEffect(() => {
@@ -312,6 +314,18 @@ export function ClassWeeksPanel({
               Xuất Excel
             </Button>
             <Button
+              aria-expanded={isStudentImportOpen}
+              onClick={() => {
+                setIsStudentImportOpen((open) => !open);
+                setStudentFeedback(null);
+              }}
+              type="button"
+              variant="outline"
+            >
+              <FileSpreadsheet className="size-4" />
+              {isStudentImportOpen ? "Đóng nhập Excel" : "Nhập Excel"}
+            </Button>
+            <Button
               aria-expanded={isStudentFormOpen}
               onClick={() => {
                 setIsStudentFormOpen((open) => !open);
@@ -338,6 +352,16 @@ export function ClassWeeksPanel({
               mode="create"
               onClose={() => setIsStudentFormOpen(false)}
               onSuccess={() => setStudentFeedback("Đã thêm học sinh vào lớp.")}
+            />
+          </div>
+        ) : null}
+
+        {isStudentImportOpen ? (
+          <div className="mt-4">
+            <StudentImportPanel
+              classId={classId}
+              onClose={() => setIsStudentImportOpen(false)}
+              onSuccess={setStudentFeedback}
             />
           </div>
         ) : null}

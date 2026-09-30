@@ -19,6 +19,7 @@ type StudentExcelExportRow = {
   full_name: string;
   date_of_birth: string | null;
   gender: StudentGender;
+  notes?: string;
 };
 
 function sanitizeFilenamePart(value: string) {
@@ -53,6 +54,7 @@ export function exportStudentsToExcel(input: {
       "Ngày tháng năm sinh",
       "Dân tộc",
       "Mã học sinh",
+      "Ghi chú",
     ],
     ...sortedStudents.map((student, index) => [
       index + 1,
@@ -61,9 +63,10 @@ export function exportStudentsToExcel(input: {
       displayBirthDate(student.date_of_birth),
       "",
       student.student_code,
+      student.notes ?? "",
     ]),
     [],
-    [`Sĩ số: ${sortedStudents.length} học sinh`, "", "", "", "", ""],
+    [`Sĩ số: ${sortedStudents.length} học sinh`, "", "", "", "", "", ""],
   ];
   const workbook = XLSX.utils.book_new();
   const sheet = XLSX.utils.aoa_to_sheet(data);
@@ -105,6 +108,7 @@ export function exportStudentsToExcel(input: {
     { wch: 20 },
     { wch: 15 },
     { wch: 15 },
+    { wch: 40 },
   ];
   XLSX.utils.book_append_sheet(workbook, sheet, "Danh sách học sinh");
 
@@ -121,7 +125,13 @@ export function exportStudentsToExcel(input: {
 const HEADER_ALIASES: Record<string, string[]> = {
   student_code: ["student_code", "mã_học_sinh", "ma_hoc_sinh", "mã_hs", "ma_hs"],
   full_name: ["full_name", "họ_và_tên", "ho_va_ten", "họ_tên", "ho_ten"],
-  date_of_birth: ["date_of_birth", "ngày_sinh", "ngay_sinh"],
+  date_of_birth: [
+    "date_of_birth",
+    "ngày_sinh",
+    "ngay_sinh",
+    "ngày_tháng_năm_sinh",
+    "ngay_thang_nam_sinh",
+  ],
   gender: ["gender", "giới_tính", "gioi_tinh"],
   notes: ["notes", "ghi_chú", "ghi_chu"],
 };
