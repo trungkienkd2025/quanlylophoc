@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { Download, FileSpreadsheet, UserPlus } from "lucide-react";
+import { useEffect, useMemo, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { Download, FileSpreadsheet, Trash2, UserPlus } from "lucide-react";
 import { WeekBoard } from "@/app/(app)/classes/[classId]/weeks/[week]/week-board";
 import { StudentFormPanel } from "@/app/(app)/classes/[classId]/students/student-form-panel";
 import { StudentImportPanel } from "@/app/(app)/classes/[classId]/students/student-import-panel";
+import { softDeleteAllStudents } from "@/app/actions/students";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -68,11 +70,15 @@ export function ClassWeeksPanel({
   initialWeek: number;
   autoSelectCurrentWeek: boolean;
 }) {
+  const router = useRouter();
   const [selectedWeek, setSelectedWeek] = useState<number>(initialWeek);
   const [dateOverrides, setDateOverrides] = useState<Record<number, { start_date: string; end_date: string }>>({});
   const [isStudentFormOpen, setIsStudentFormOpen] = useState(false);
   const [isStudentImportOpen, setIsStudentImportOpen] = useState(false);
+  const [isDeleteAllOpen, setIsDeleteAllOpen] = useState(false);
   const [studentFeedback, setStudentFeedback] = useState<string | null>(null);
+  const [studentError, setStudentError] = useState<string | null>(null);
+  const [isDeletingStudents, startDeleteTransition] = useTransition();
 
   useEffect(() => {
     if (!autoSelectCurrentWeek) return;
@@ -202,6 +208,24 @@ export function ClassWeeksPanel({
     }));
   }
 
+  function handleDeleteAllStudents() {
+    startDeleteTransition(async () => {
+      const result = await softDeleteAllStudents(classId);
+
+      if (result.error) {
+        setStudentError(result.error);
+        return;
+      }
+
+      setStudentFeedback(result.success ?? "Đã đưa toàn bộ học sinh ra khỏi lớp.");
+      setStudentError(null);
+      setIsDeleteAllOpen(false);
+      setIsStudentFormOpen(false);
+      setIsStudentImportOpen(false);
+      router.refresh();
+    });
+  }
+
   return (
     <section aria-labelledby="week-grid" className="space-y-4">
       <div className="space-y-3">
@@ -318,6 +342,7 @@ export function ClassWeeksPanel({
               onClick={() => {
                 setIsStudentImportOpen((open) => !open);
                 setStudentFeedback(null);
+                setStudentError(null);
               }}
               type="button"
               variant="outline"
@@ -330,11 +355,25 @@ export function ClassWeeksPanel({
               onClick={() => {
                 setIsStudentFormOpen((open) => !open);
                 setStudentFeedback(null);
+                setStudentError(null);
               }}
               type="button"
             >
               <UserPlus className="size-4" />
               {isStudentFormOpen ? "Đóng biểu mẫu" : "Thêm học sinh"}
+            </Button>
+            <Button
+              disabled={students.length === 0}
+              onClick={() => {
+                setIsDeleteAllOpen(true);
+                setStudentFeedback(null);
+                setStudentError(null);
+              }}
+              type="button"
+              variant="destructive"
+            >
+              <Trash2 className="size-4" />
+              Xóa tất cả
             </Button>
           </div>
         </div>
@@ -342,6 +381,12 @@ export function ClassWeeksPanel({
         {studentFeedback ? (
           <p aria-live="polite" className="mt-3 text-sm text-emerald-600">
             {studentFeedback}
+          </p>
+        ) : null}
+
+        {studentError ? (
+          <p aria-live="polite" className="mt-3 text-sm text-destructive">
+            {studentError}
           </p>
         ) : null}
 
@@ -366,6 +411,48 @@ export function ClassWeeksPanel({
           </div>
         ) : null}
       </section>
+
+      {isDeleteAllOpen ? (
+        <dialog
+          aria-labelledby="delete-all-students-title"
+          aria-modal="true"
+          className="fixed inset-0 z-50 m-0 flex h-full max-h-none w-full max-w-none items-center justify-center bg-black/40 p-4 backdrop:bg-black/40"
+          open
+        >
+          <div className="w-full max-w-md rounded-2xl bg-card p-5 shadow-lg">
+            <h2 className="text-lg font-bold" id="delete-all-students-title">
+              Xóa tất cả học sinh khỏi lớp?
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Toàn bộ {students.length} học sinh sẽ bị đưa ra khỏi danh sách lớp {className}.
+            </p>
+            <p className="mt-3 text-sm font-semibold text-destructive">
+              Hành động này không thể hoàn tác trên màn hình này.
+            </p>
+            <div className="mt-5 flex flex-col-reverse gap-3 sm:flex-row">
+              <Button
+                className="h-11"
+                disabled={isDeletingStudents}
+                onClick={() => setIsDeleteAllOpen(false)}
+                type="button"
+                variant="outline"
+              >
+                Hủy
+              </Button>
+              <Button
+                className="h-11"
+                disabled={isDeletingStudents}
+                onClick={handleDeleteAllStudents}
+                type="button"
+                variant="destructive"
+              >
+                <Trash2 className="size-4" />
+                {isDeletingStudents ? "Đang xóa…" : `Xóa ${students.length} học sinh`}
+              </Button>
+            </div>
+          </div>
+        </dialog>
+      ) : null}
 
       <div className="rounded-xl border bg-background p-3 sm:p-4">
         <WeekBoard
