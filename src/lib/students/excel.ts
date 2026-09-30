@@ -1,6 +1,10 @@
 import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 import type { ExcelStudentRow } from "@/types/student";
 import { EXCEL_IMPORT_LIMITS, validateImportRowCount } from "@/lib/students/import-limits";
+import { formatDateVi, genderLabel } from "@/lib/students/format";
+import { sortStudents } from "@/lib/students/sort";
+import type { StudentGender } from "@/types/student";
 
 const TEMPLATE_HEADERS = [
   "Mã học sinh",
@@ -9,6 +13,110 @@ const TEMPLATE_HEADERS = [
   "Giới tính",
   "Ghi chú",
 ] as const;
+
+type StudentExcelExportRow = {
+  student_code: string;
+  full_name: string;
+  date_of_birth: string | null;
+  gender: StudentGender;
+};
+
+function sanitizeFilenamePart(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/Đ/g, "D")
+    .replace(/[^a-zA-Z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
+function displayGender(gender: StudentGender) {
+  return gender === "UNSPECIFIED" ? "" : genderLabel(gender);
+}
+
+function displayBirthDate(dateOfBirth: string | null) {
+  return dateOfBirth ? formatDateVi(dateOfBirth) : "";
+}
+
+export function exportStudentsToExcel(input: {
+  className: string;
+  schoolYear: string;
+  students: StudentExcelExportRow[];
+}): void {
+  const sortedStudents = sortStudents(input.students, "name");
+  const data = [
+    [
+      "STT",
+      "Họ và tên",
+      "Giới tính",
+      "Ngày tháng năm sinh",
+      "Dân tộc",
+      "Mã học sinh",
+    ],
+    ...sortedStudents.map((student, index) => [
+      index + 1,
+      student.full_name,
+      displayGender(student.gender),
+      displayBirthDate(student.date_of_birth),
+      "",
+      student.student_code,
+    ]),
+    [],
+    [`Sĩ số: ${sortedStudents.length} học sinh`, "", "", "", "", ""],
+  ];
+  const workbook = XLSX.utils.book_new();
+  const sheet = XLSX.utils.aoa_to_sheet(data);
+  const range = XLSX.utils.decode_range(sheet["!ref"] ?? "A1:F1");
+
+  for (let row = range.s.r; row <= range.e.r; row += 1) {
+    for (let col = range.s.c; col <= range.e.c; col += 1) {
+      const cellAddress = XLSX.utils.encode_cell({ r: row, c: col });
+      const cell = sheet[cellAddress];
+      if (!cell) continue;
+      cell.s = {
+        font: { name: "Times New Roman", sz: 13, bold: row === 0 },
+        fill:
+          row === 0
+            ? { fgColor: { rgb: "D9EAF7" }, patternType: "solid" }
+            : undefined,
+        alignment: {
+          horizontal:
+            row === 0 || [0, 2, 3, 4, 5].includes(col) ? "center" : "left",
+          vertical: "center",
+        },
+        border:
+          row <= sortedStudents.length
+            ? {
+                top: { style: "thin", color: { rgb: "808080" } },
+                bottom: { style: "thin", color: { rgb: "808080" } },
+                left: { style: "thin", color: { rgb: "808080" } },
+                right: { style: "thin", color: { rgb: "808080" } },
+              }
+            : undefined,
+      };
+    }
+  }
+
+  sheet["!cols"] = [
+    { wch: 6 },
+    { wch: 35 },
+    { wch: 15 },
+    { wch: 20 },
+    { wch: 15 },
+    { wch: 15 },
+  ];
+  XLSX.utils.book_append_sheet(workbook, sheet, "Danh sách học sinh");
+
+  const buffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+  const blob = new Blob([buffer], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  });
+  saveAs(
+    blob,
+    `Danh_sach_hoc_sinh_${sanitizeFilenamePart(input.className)}_${sanitizeFilenamePart(input.schoolYear)}.xlsx`,
+  );
+}
 
 const HEADER_ALIASES: Record<string, string[]> = {
   student_code: ["student_code", "mã_học_sinh", "ma_hoc_sinh", "mã_hs", "ma_hs"],

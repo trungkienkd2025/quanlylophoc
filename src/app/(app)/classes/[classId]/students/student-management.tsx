@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { saveAs } from "file-saver";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import {
   ArrowDownAZ,
@@ -25,11 +24,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import {
-  formatDateVi,
-  genderLabel,
-} from "@/lib/students/format";
-import { downloadStudentTemplate } from "@/lib/students/excel";
+import { formatDateVi, genderLabel } from "@/lib/students/format";
+import { downloadStudentTemplate, exportStudentsToExcel } from "@/lib/students/excel";
 import {
   sortStudents,
   type StudentSortMode,
@@ -41,7 +37,6 @@ import type { AttendanceStatus } from "@/types/attendance";
 import { StudentFormPanel } from "./student-form-panel";
 import { StudentImportPanel } from "./student-import-panel";
 import { StudentPointsControls } from "./student-points-controls";
-import * as XLSX from "xlsx";
 
 type StudentManagementProps = {
   classId: string;
@@ -56,105 +51,12 @@ type StudentManagementProps = {
 
 type PanelMode = "none" | "create" | "edit" | "import";
 
-function sanitizeFilenamePart(value: string) {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/đ/g, "d")
-    .replace(/Đ/g, "D")
-    .replace(/[^a-zA-Z0-9]+/g, "_")
-    .replace(/^_+|_+$/g, "");
-}
-
 function displayGender(gender: StudentListItem["gender"]) {
   return gender === "UNSPECIFIED" ? "" : genderLabel(gender);
 }
 
 function displayBirthDate(dateOfBirth: string | null) {
   return dateOfBirth ? formatDateVi(dateOfBirth) : "";
-}
-
-function saveExcelFile(workbook: XLSX.WorkBook, fileName: string) {
-  const buffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
-  const blob = new Blob([buffer], {
-    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  });
-
-  saveAs(blob, fileName);
-}
-
-export function exportStudentsToExcel(input: {
-  className: string;
-  schoolYear: string;
-  students: StudentListItem[];
-}) {
-  const sortedStudents = sortStudents(input.students, "name");
-  const data = [
-    [
-      "STT",
-      "Họ và tên",
-      "Giới tính",
-      "Ngày tháng năm sinh",
-      "Dân tộc",
-      "Mã học sinh",
-    ],
-    ...sortedStudents.map((student, index) => [
-      index + 1,
-      student.full_name,
-      displayGender(student.gender),
-      displayBirthDate(student.date_of_birth),
-      "",
-      student.student_code,
-    ]),
-    [],
-    [`Sĩ số: ${sortedStudents.length} học sinh`, "", "", "", "", ""],
-  ];
-  const workbook = XLSX.utils.book_new();
-  const sheet = XLSX.utils.aoa_to_sheet(data);
-  const range = XLSX.utils.decode_range(sheet["!ref"] ?? "A1:F1");
-
-  for (let row = range.s.r; row <= range.e.r; row += 1) {
-    for (let col = range.s.c; col <= range.e.c; col += 1) {
-      const cellAddress = XLSX.utils.encode_cell({ r: row, c: col });
-      const cell = sheet[cellAddress];
-      if (!cell) continue;
-      cell.s = {
-        font: { name: "Times New Roman", sz: 13, bold: row === 0 },
-        fill:
-          row === 0
-            ? { fgColor: { rgb: "D9EAF7" }, patternType: "solid" }
-            : undefined,
-        alignment: {
-          horizontal:
-            row === 0 || [0, 2, 3, 4, 5].includes(col) ? "center" : "left",
-          vertical: "center",
-        },
-        border:
-          row <= sortedStudents.length
-            ? {
-                top: { style: "thin", color: { rgb: "808080" } },
-                bottom: { style: "thin", color: { rgb: "808080" } },
-                left: { style: "thin", color: { rgb: "808080" } },
-                right: { style: "thin", color: { rgb: "808080" } },
-              }
-            : undefined,
-      };
-    }
-  }
-
-  sheet["!cols"] = [
-    { wch: 6 },
-    { wch: 35 },
-    { wch: 15 },
-    { wch: 20 },
-    { wch: 15 },
-    { wch: 15 },
-  ];
-  XLSX.utils.book_append_sheet(workbook, sheet, "Danh sách học sinh");
-  saveExcelFile(
-    workbook,
-    `Danh_sach_hoc_sinh_${sanitizeFilenamePart(input.className)}_${sanitizeFilenamePart(input.schoolYear)}.xlsx`,
-  );
 }
 
 export function StudentManagement({
