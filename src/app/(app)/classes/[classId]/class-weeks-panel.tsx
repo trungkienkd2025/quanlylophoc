@@ -332,7 +332,6 @@ export function ClassWeeksPanel({
                 exportStudentsToExcel({ className, schoolYear, students })
               }
               type="button"
-              variant="outline"
             >
               <Download className="size-4" />
               Xuất Excel
@@ -345,7 +344,6 @@ export function ClassWeeksPanel({
                 setStudentError(null);
               }}
               type="button"
-              variant="outline"
             >
               <FileSpreadsheet className="size-4" />
               {isStudentImportOpen ? "Đóng nhập Excel" : "Nhập Excel"}
