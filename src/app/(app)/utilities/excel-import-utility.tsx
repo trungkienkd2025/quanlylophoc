@@ -1,12 +1,12 @@
 "use client";
 
 import { type ChangeEvent, useRef, useState } from "react";
-import { Download, FileSpreadsheet, Upload } from "lucide-react";
+import { Download, Upload } from "lucide-react";
 import * as XLSX from "xlsx";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { sortExcelRowsByColumnC } from "@/lib/excel/sort";
+import { sortExcelRowsByNameColumn } from "@/lib/excel/sort";
 
 const EXCEL_MIME_TYPES = [
   "application/vnd.ms-excel",
@@ -57,24 +57,34 @@ export function ExcelImportUtility() {
     if (!workbook || !file) return;
 
     const sortedWorkbook = XLSX.utils.book_new();
+    let foundNameColumn = false;
 
-    workbook.SheetNames.forEach((sheetName, index) => {
+    workbook.SheetNames.forEach((sheetName) => {
       const worksheet = workbook.Sheets[sheetName];
-      const sortedWorksheet =
-        index === 0
-          ? XLSX.utils.aoa_to_sheet(
-              sortExcelRowsByColumnC(
-                XLSX.utils.sheet_to_json<(string | number | boolean | Date | null)[]>(worksheet, {
-                  header: 1,
-                  defval: "",
-                  raw: false,
-                }),
-              ),
-            )
-          : worksheet;
-      XLSX.utils.book_append_sheet(sortedWorkbook, sortedWorksheet, sheetName);
+      const rows = XLSX.utils.sheet_to_json<(string | number | boolean | Date | null)[]>(worksheet, {
+        header: 1,
+        defval: "",
+        raw: false,
+      });
+      const sortedRows = sortExcelRowsByNameColumn(rows);
+
+      if (sortedRows) {
+        foundNameColumn = true;
+      }
+
+      XLSX.utils.book_append_sheet(
+        sortedWorkbook,
+        sortedRows ? XLSX.utils.aoa_to_sheet(sortedRows) : worksheet,
+        sheetName,
+      );
     });
 
+    if (!foundNameColumn) {
+      setError('Không tìm thấy cột có tiêu đề "Họ và tên" hoặc "Họ tên" để sắp xếp.');
+      return;
+    }
+
+    setError("");
     const originalName = file.name.replace(/\.xlsx?$/i, "");
     XLSX.writeFile(sortedWorkbook, `${originalName}_sap_xep_ABC.xlsx`);
   }
@@ -85,7 +95,7 @@ export function ExcelImportUtility() {
         <div>
           <h2 className="text-lg font-bold">Sắp xếp ABC</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Nhập file Excel, sau đó xuất lại danh sách đã được sắp xếp theo ABC ở cột C.
+            Nhập file Excel, sau đó xuất lại danh sách đã được sắp xếp theo ABC ở cột “Họ và tên” hoặc “Họ tên”.
           </p>
         </div>
 
