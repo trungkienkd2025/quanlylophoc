@@ -1,20 +1,8 @@
 import { ArrowLeft, FileSpreadsheet } from "lucide-react";
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { ExcelImportUtility } from "./excel-import-utility";
-import { createClient } from "@/lib/supabase/server";
 
-export default async function UtilitiesPage() {
-  const supabase = await createClient();
-  const { data: classes, error } = await supabase
-    .from("classes")
-    .select("id, name, grade, school_year")
-    .is("deleted_at", null)
-    .order("school_year", { ascending: false })
-    .order("name");
-
-  if (error) notFound();
-
+export default function UtilitiesPage() {
   return (
     <>
       <Link
@@ -31,11 +19,11 @@ export default async function UtilitiesPage() {
         </div>
         <h1 className="text-2xl font-bold tracking-tight">Tiện ích</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Nhập nhanh danh sách học sinh từ file Excel vào lớp bạn chọn.
+          Sắp xếp nhanh danh sách trong file Excel theo ABC.
         </p>
       </header>
 
-      <ExcelImportUtility classes={classes ?? []} />
+      <ExcelImportUtility />
     </>
   );
 }
