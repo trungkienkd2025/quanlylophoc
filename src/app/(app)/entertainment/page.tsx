@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowLeft, Gamepad2 } from "lucide-react";
 
 import { getEntertainmentVideos } from "@/app/actions/entertainment";
+import { ExcelSorter } from "./excel-sorter";
 import { EntertainmentClient } from "./entertainment-client";
 
 export default async function EntertainmentPage() {
@@ -33,6 +34,7 @@ export default async function EntertainmentPage() {
         </p>
       </header>
 
+      <ExcelSorter />
       <EntertainmentClient initialVideos={videos} />
     </div>
   );
