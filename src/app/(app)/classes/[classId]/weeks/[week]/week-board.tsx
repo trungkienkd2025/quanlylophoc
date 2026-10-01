@@ -237,7 +237,7 @@ export function WeekBoard({
       <div className="space-y-3">
         <div className="flex justify-center">
           <div className="flex flex-wrap justify-center gap-2">
-            <Button onClick={handleExport} type="button" variant="outline">
+            <Button onClick={handleExport} type="button">
               Xuất Excel (cả lớp)
             </Button>
             <Button disabled={isSaving} onClick={handleSave}>
