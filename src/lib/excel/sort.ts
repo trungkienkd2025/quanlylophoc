@@ -12,6 +12,8 @@ export type ExcelNameColumnSortTarget = {
   headerRowIndex: number;
 };
 
+export type ExcelColumnSortTarget = ExcelNameColumnSortTarget;
+
 function normalizeHeader(value: ExcelCellValue): string {
   return String(value ?? "")
     .trim()
@@ -37,16 +39,38 @@ export function findExcelNameColumn(rows: readonly ExcelRow[]): ExcelNameColumnS
 }
 
 /**
- * Keeps all rows through the name-column header in place, then sorts the rows
- * below it using Vietnamese alphabetical order. Returns null when no name
- * column can be identified so the caller does not export an incorrectly sorted file.
+ * Converts an Excel column reference (A, C, AA...) to its zero-based index.
+ * Returns null for an invalid reference so callers can show a friendly error.
  */
-export function sortExcelRowsByNameColumn<T extends ExcelRow>(
-  rows: readonly T[],
-): T[] | null {
-  const target = findExcelNameColumn(rows);
-  if (!target) return null;
+export function getExcelColumnIndex(columnReference: string): number | null {
+  const normalizedReference = columnReference.trim().toUpperCase();
 
+  if (!/^[A-Z]+$/.test(normalizedReference)) return null;
+
+  return [...normalizedReference].reduce(
+    (columnIndex, character) => columnIndex * 26 + character.charCodeAt(0) - 64,
+    0,
+  ) - 1;
+}
+
+/**
+ * Finds the first populated cell in a selected column to use as its header.
+ * This preserves title rows above the table when sorting an uploaded workbook.
+ */
+export function findExcelColumn(rows: readonly ExcelRow[], columnReference: string): ExcelColumnSortTarget | null {
+  const columnIndex = getExcelColumnIndex(columnReference);
+  if (columnIndex === null) return null;
+
+  const headerRowIndex = rows.findIndex((row) => String(row[columnIndex] ?? "").trim() !== "");
+  if (headerRowIndex === -1) return null;
+
+  return { columnIndex, headerRowIndex };
+}
+
+function sortExcelRowsByTarget<T extends ExcelRow>(
+  rows: readonly T[],
+  target: ExcelColumnSortTarget,
+): T[] {
   const rowsBeforeData = rows.slice(0, target.headerRowIndex + 1);
   const dataRows = rows.slice(target.headerRowIndex + 1);
 
@@ -59,6 +83,34 @@ export function sortExcelRowsByNameColumn<T extends ExcelRow>(
       ),
     ),
   ];
+}
+
+/**
+ * Keeps all rows through the name-column header in place, then sorts the rows
+ * below it using Vietnamese alphabetical order. Returns null when no name
+ * column can be identified so the caller does not export an incorrectly sorted file.
+ */
+export function sortExcelRowsByNameColumn<T extends ExcelRow>(
+  rows: readonly T[],
+): T[] | null {
+  const target = findExcelNameColumn(rows);
+  if (!target) return null;
+
+  return sortExcelRowsByTarget(rows, target);
+}
+
+/**
+ * Keeps the selected column's header and all preceding rows in place, then
+ * sorts rows below it using Vietnamese alphabetical order.
+ */
+export function sortExcelRowsByColumnReference<T extends ExcelRow>(
+  rows: readonly T[],
+  columnReference: string,
+): T[] | null {
+  const target = findExcelColumn(rows, columnReference);
+  if (!target) return null;
+
+  return sortExcelRowsByTarget(rows, target);
 }
 
 /**
