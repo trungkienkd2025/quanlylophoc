@@ -215,7 +215,7 @@ Chi tiết policy/RPC: [architecture.md](./architecture.md).
 - Tạo nhanh: chỉ bắt buộc mã + họ tên (các field khác optional).
 - List: search theo tên / mã; soft delete thay vì xóa cứng.
 - Import Excel: parse → validate ALL → preview → confirm → transaction RPC. Không import nửa chừng im lặng. File xuất danh sách có thể nhập lại sau khi thêm dòng: học sinh có mã đã tồn tại được giữ nguyên, chỉ thêm mã mới.
-- Tiện ích **Sắp xếp ABC**: chỉ sắp xếp những dòng bên dưới tiêu đề cột `Họ và tên` hoặc `Họ tên`; giữ nguyên các dòng tiêu đề và tự báo lỗi thân thiện nếu không tìm thấy cột này.
+- Tiện ích **Sắp xếp ABC**: giáo viên nhập chữ cái cột cần sắp xếp (ví dụ `C` hoặc `AA`); giữ nguyên dòng tiêu đề cột và các dòng phía trên, chỉ sắp xếp những dòng dữ liệu phía dưới theo ABC, đồng thời tự báo lỗi thân thiện nếu cột không hợp lệ hoặc không có dữ liệu.
 - Giới hạn import: xem `src/lib/students/import-limits.ts` (ví dụ ~200 hàng, ~2MB).
 - Cột tối thiểu: `student_code`, `full_name`.
 

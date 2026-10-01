@@ -5,8 +5,9 @@ import { Download, Upload } from "lucide-react";
 import * as XLSX from "xlsx";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { sortExcelRowsByNameColumn } from "@/lib/excel/sort";
+import { getExcelColumnIndex, sortExcelRowsByColumnReference } from "@/lib/excel/sort";
 
 const EXCEL_MIME_TYPES = [
   "application/vnd.ms-excel",
@@ -17,6 +18,7 @@ export function ExcelImportUtility() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [workbook, setWorkbook] = useState<XLSX.WorkBook | null>(null);
+  const [columnReference, setColumnReference] = useState("C");
   const [error, setError] = useState("");
 
   async function importExcelFile(event: ChangeEvent<HTMLInputElement>) {
@@ -56,8 +58,14 @@ export function ExcelImportUtility() {
   function exportSortedExcel() {
     if (!workbook || !file) return;
 
+    const normalizedColumnReference = columnReference.trim().toUpperCase();
+    if (getExcelColumnIndex(normalizedColumnReference) === null) {
+      setError("Vui lòng nhập tên cột theo dạng chữ cái, ví dụ: A, C hoặc AA.");
+      return;
+    }
+
     const sortedWorkbook = XLSX.utils.book_new();
-    let foundNameColumn = false;
+    let foundSelectedColumn = false;
 
     workbook.SheetNames.forEach((sheetName) => {
       const worksheet = workbook.Sheets[sheetName];
@@ -66,10 +74,10 @@ export function ExcelImportUtility() {
         defval: "",
         raw: false,
       });
-      const sortedRows = sortExcelRowsByNameColumn(rows);
+      const sortedRows = sortExcelRowsByColumnReference(rows, normalizedColumnReference);
 
       if (sortedRows) {
-        foundNameColumn = true;
+        foundSelectedColumn = true;
       }
 
       XLSX.utils.book_append_sheet(
@@ -79,8 +87,8 @@ export function ExcelImportUtility() {
       );
     });
 
-    if (!foundNameColumn) {
-      setError('Không tìm thấy cột có tiêu đề "Họ và tên" hoặc "Họ tên" để sắp xếp.');
+    if (!foundSelectedColumn) {
+      setError(`Không tìm thấy dữ liệu ở cột ${normalizedColumnReference} để sắp xếp.`);
       return;
     }
 
@@ -95,7 +103,20 @@ export function ExcelImportUtility() {
         <div>
           <h2 className="text-lg font-bold">Sắp xếp ABC</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Nhập file Excel, sau đó xuất lại danh sách đã được sắp xếp theo ABC ở cột “Họ và tên” hoặc “Họ tên”.
+            Nhập file Excel, chọn cột cần sắp xếp, rồi xuất lại danh sách theo thứ tự ABC.
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="excel-sort-column">Cột cần sắp xếp</Label>
+          <Input
+            id="excel-sort-column"
+            onChange={(event) => setColumnReference(event.target.value.toUpperCase())}
+            placeholder="Ví dụ: C"
+            value={columnReference}
+          />
+          <p className="text-sm text-muted-foreground">
+            Nhập chữ cái của cột trong Excel, ví dụ: A, C hoặc AA.
           </p>
         </div>
 
