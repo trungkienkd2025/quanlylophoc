@@ -42,6 +42,7 @@ type StudentManagementProps = {
   classId: string;
   className: string;
   initialEditId?: string;
+  initialImport?: boolean;
   pointTotals: StudentPointTotals;
   schoolYear: string;
   initialAttendance: Record<string, AttendanceStatus>;
@@ -63,6 +64,7 @@ export function StudentManagement({
   classId,
   className,
   initialEditId,
+  initialImport = false,
   pointTotals,
   schoolYear,
   initialAttendance,
@@ -77,7 +79,7 @@ export function StudentManagement({
   const [search, setSearch] = useState("");
   const [sortMode, setSortMode] = useState<StudentSortMode>("name");
   const [panel, setPanel] = useState<PanelMode>(
-    initialEditStudent ? "edit" : "none",
+    initialEditStudent ? "edit" : initialImport ? "import" : "none",
   );
   const [editingStudent, setEditingStudent] = useState<
     (StudentListItem & { updated_at?: string }) | null
