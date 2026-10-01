@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Gamepad2, GraduationCap, UsersRound, Video } from "lucide-react";
+import { Gamepad2, GraduationCap, UsersRound, Video, Wrench } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/server";
 
@@ -107,6 +107,24 @@ export default async function DashboardPage() {
                 </h2>
                 <p className="text-xs text-muted-foreground font-normal text-slate-600">
                   Không gian trò chơi và hoạt động thư giãn cho lớp học
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/utilities" className="block">
+          <Card
+            className="h-full border-rose-200 bg-gradient-to-br from-rose-100 via-white to-pink-50 shadow-sm transition hover:border-rose-300 hover:shadow-md cursor-pointer"
+            size="sm"
+          >
+            <CardContent className="flex items-center gap-4 py-5">
+              <div className="grid size-12 shrink-0 place-items-center rounded-2xl bg-rose-500 text-white">
+                <Wrench className="size-6" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-rose-950">Tiện ích</h2>
+                <p className="text-xs text-muted-foreground font-normal text-slate-600">
+                  Nhập danh sách học sinh từ file Excel
                 </p>
               </div>
             </CardContent>

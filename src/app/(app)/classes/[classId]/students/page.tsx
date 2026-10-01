@@ -12,10 +12,10 @@ export default async function ClassStudentsPage({
   searchParams,
 }: {
   params: Promise<{ classId: string }>;
-  searchParams: Promise<{ edit?: string }>;
+  searchParams: Promise<{ edit?: string; import?: string }>;
 }) {
   const { classId } = await params;
-  const { edit: initialEditId } = await searchParams;
+  const { edit: initialEditId, import: importStudents } = await searchParams;
   const supabase = await createClient();
   const attendanceDate = getLocalDateString();
 
@@ -110,6 +110,7 @@ export default async function ClassStudentsPage({
               (attendanceRows ?? []).map((row) => [row.student_id, row.status]),
             )}
             initialEditId={initialEditId}
+            initialImport={importStudents === "1"}
             pointTotals={pointTotals}
             schoolYear={classItem.school_year}
             students={students ?? []}
